@@ -149,14 +149,17 @@ export default function ColorPicker({ value, onChange }: Props) {
   const handleHexChange = useCallback(
     (raw: string) => {
       setHexInput(raw);
-      const normalized = normalizeHex(raw);
+      // Only fire on a full 6-digit hex — 3-char shorthand normalizes too early
+      // and triggers a color jump mid-typing (e.g. "FF0" → #ffff00 after 3 chars).
+      const stripped = raw.replace(/^#/, "");
+      const normalized = stripped.length === 6 ? normalizeHex(raw) : null;
       if (normalized) {
         setHexError(false);
         const { r, g, b } = hexToRgb(normalized);
         setRgbInput({ r: String(r), g: String(g), b: String(b) });
         onChange(normalized);
       } else {
-        setHexError(raw.length > 0);
+        setHexError(raw.length > 0 && stripped.length >= 6);
       }
     },
     [onChange]
@@ -220,6 +223,7 @@ export default function ColorPicker({ value, onChange }: Props) {
             $error={hexError}
             aria-label="Hex color value"
             spellCheck={false}
+            autoComplete="off"
           />
           {hexError && <ErrorHint>invalid hex</ErrorHint>}
         </FieldGroup>
@@ -235,6 +239,7 @@ export default function ColorPicker({ value, onChange }: Props) {
                 value={rgbInput[ch]}
                 onChange={(e) => handleRgbChange(ch, e.target.value)}
                 aria-label={`${ch.toUpperCase()} channel`}
+                autoComplete="off"
               />
             </FieldGroup>
           ))}
