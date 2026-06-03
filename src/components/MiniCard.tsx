@@ -6,7 +6,7 @@
 // on very narrow cells. Material tags are dropped here to save space.
 
 import { useState, useCallback } from "react";
-import styled from "styled-components";
+import styled, { keyframes } from "styled-components";
 import { type PantoneMatch, deltaELabel } from "@/lib/matcher";
 
 interface Props {
@@ -27,7 +27,7 @@ export default function MiniCard({ match, rank }: Props) {
   const label = deltaELabel(match.deltaE);
 
   return (
-    <Card>
+    <Card style={{ animationDelay: `${Math.min(rank - 1, 8) * 0.04}s` }}>
       <Header>
         <Swatch style={{ background: match.hex }} aria-hidden="true" />
         <HeaderText>
@@ -66,12 +66,24 @@ const pixelBorder = `
     0 2px 0 #2a2a2a;
 `;
 
+const fadeInUp = keyframes`
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+`;
+
 const Card = styled.article`
   background: #111;
   display: flex;
   flex-direction: column;
   ${pixelBorder}
   transition: transform 0.08s;
+  animation: ${fadeInUp} 0.3s ease both;
   &:hover {
     transform: translateY(-2px);
     box-shadow:
@@ -79,6 +91,9 @@ const Card = styled.article`
       2px 0 0 #cc2222,
       0 -2px 0 #cc2222,
       0 4px 0 #cc2222;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
   }
 `;
 
@@ -105,6 +120,7 @@ const Swatch = styled.div`
   height: 40px;
   flex-shrink: 0;
   image-rendering: pixelated;
+  transition: background 0.2s ease;
   box-shadow:
     -1px 0 0 #2a2a2a,
     1px 0 0 #2a2a2a,

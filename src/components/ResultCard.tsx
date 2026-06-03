@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import styled from "styled-components";
+import styled, { keyframes } from "styled-components";
 import { type PantoneMatch, deltaELabel } from "@/lib/matcher";
 
 interface Props {
@@ -22,7 +22,9 @@ export default function ResultCard({ match, rank }: Props) {
   const label = deltaELabel(match.deltaE);
 
   return (
-    <Card>
+    // Stagger the entrance by rank so results cascade in (capped so deep lists
+    // don't feel sluggish).
+    <Card style={{ animationDelay: `${Math.min(rank - 1, 8) * 0.04}s` }}>
       <Swatch style={{ background: match.hex }} aria-hidden="true" />
       <Body>
         <TopRow>
@@ -68,6 +70,17 @@ const pixelBorder = `
     0 2px 0 #2a2a2a;
 `;
 
+const fadeInUp = keyframes`
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+`;
+
 const Card = styled.article`
   background: #111;
   display: flex;
@@ -75,6 +88,7 @@ const Card = styled.article`
   overflow: hidden;
   ${pixelBorder}
   transition: transform 0.08s;
+  animation: ${fadeInUp} 0.3s ease both;
   &:hover {
     transform: translateY(-2px);
     box-shadow:
@@ -83,12 +97,17 @@ const Card = styled.article`
       0 -2px 0 #cc2222,
       0 4px 0 #cc2222;
   }
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
 `;
 
 const Swatch = styled.div`
   height: 80px;
   width: 100%;
   image-rendering: pixelated;
+  /* Ease swatch recolor when the same card stays but its match changes. */
+  transition: background 0.2s ease;
 `;
 
 const Body = styled.div`

@@ -3,11 +3,12 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
-import styled from "styled-components";
+import styled, { keyframes } from "styled-components";
 import ColorPicker from "@/components/ColorPicker";
 import ResultsGrid from "@/components/ResultsGrid";
 import Disclaimer from "@/components/Disclaimer";
 import PandaMascot from "@/components/PandaMascot";
+import LoadingScreen from "@/components/LoadingScreen";
 import { findClosest, type PantoneMatch } from "@/lib/matcher";
 import { normalizeHex, getContrastColor } from "@/lib/color";
 
@@ -33,6 +34,9 @@ function AppContent() {
   const [matches, setMatches] = useState<PantoneMatch[]>(() =>
     findClosest(initialColor, DEFAULT_COUNT)
   );
+  // Starts false on both server and first client render (no hydration mismatch),
+  // then flips after mount to fade out the splash.
+  const [loaded, setLoaded] = useState(false);
 
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -73,8 +77,15 @@ function AppContent() {
     []
   );
 
+  // Hold the splash briefly so it reads as intentional, then fade it out.
+  useEffect(() => {
+    const t = setTimeout(() => setLoaded(true), 900);
+    return () => clearTimeout(t);
+  }, []);
+
   return (
     <Page>
+      <LoadingScreen hidden={loaded} />
       <Header>
         <Brand>
           <PandaMascot />
@@ -126,16 +137,18 @@ function AppContent() {
       </Hero>
 
       <Main>
-        <ColorPreviewBar style={{ background: color }}>
-          <PreviewLabel style={{ color: getContrastColor(color) }}>
-            {color.toUpperCase()}
-          </PreviewLabel>
-        </ColorPreviewBar>
-        <ResultsGrid
-          matches={matches}
-          count={count}
-          onCountChange={handleCountChange}
-        />
+        <MainInner>
+          <ColorPreviewBar style={{ background: color }}>
+            <PreviewLabel style={{ color: getContrastColor(color) }}>
+              {color.toUpperCase()}
+            </PreviewLabel>
+          </ColorPreviewBar>
+          <ResultsGrid
+            matches={matches}
+            count={count}
+            onCountChange={handleCountChange}
+          />
+        </MainInner>
       </Main>
 
       <Footer>
@@ -163,6 +176,18 @@ const Page = styled.div`
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+`;
+
+// Gentle entrance used to stagger the hero and results in on first paint.
+const fadeInUp = keyframes`
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 `;
 
 const Header = styled.header`
@@ -256,9 +281,13 @@ const HeroInner = styled.div`
   grid-template-columns: 260px 1fr;
   gap: 64px;
   align-items: start;
+  animation: ${fadeInUp} 0.4s ease both;
   @media (max-width: 700px) {
     grid-template-columns: 1fr;
     gap: 40px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
   }
 `;
 
@@ -338,13 +367,22 @@ const StatLabel = styled.span`
 
 const Main = styled.main`
   flex: 1;
+  /* Mirror Hero: full-width section padding sits OUTSIDE the 960px content
+     column (vs. inside it), so Main's content lines up flush with HeroInner. */
   padding: 40px 32px;
+`;
+
+const MainInner = styled.div`
   max-width: 960px;
-  width: 100%;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
   gap: 24px;
+  /* Slight delay after the hero so the page settles in two beats. */
+  animation: ${fadeInUp} 0.4s ease 0.1s both;
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
 `;
 
 const ColorPreviewBar = styled.div`
@@ -354,6 +392,8 @@ const ColorPreviewBar = styled.div`
   align-items: center;
   justify-content: flex-end;
   padding-right: 12px;
+  /* Ease between colors as the picker changes instead of hard-cutting. */
+  transition: background 0.2s ease;
 `;
 
 const PreviewLabel = styled.span`
