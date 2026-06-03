@@ -10,7 +10,7 @@ export default function About() {
       <Header>
         <Brand href="/">
           <PandaMascot />
-          <WordMark>PANTOMIME</WordMark>
+          <WordMark>PANDAMIME</WordMark>
         </Brand>
       </Header>
 
@@ -39,7 +39,7 @@ export default function About() {
         <Section>
           <SectionTitle>HOW MATCHING WORKS</SectionTitle>
           <Body>
-            When you pick a color, Pantomime converts it — and every color in the
+            When you pick a color, Pandamime converts it — and every color in the
             dataset — into <Strong>CIELAB color space</Strong>, which approximates
             human perceptual distance. It then ranks all dataset colors by{" "}
             <Strong>CIEDE2000 (ΔE)</Strong>, the industry-standard metric for

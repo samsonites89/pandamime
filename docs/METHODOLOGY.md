@@ -1,4 +1,4 @@
-# How Pantomime Works
+# How Pandamime Works
 
 ## Dataset provenance
 
@@ -16,7 +16,7 @@ The color data was collected from publicly visible Pantone® color chip images �
 
 1. The user's input (hex or RGB) and every color in the dataset are converted from sRGB into **CIELAB** (also called L\*a\*b\*), a color space designed to approximate human perceptual distance.
 
-2. Pantomime computes the **CIEDE2000 (ΔE)** distance between the user's color and every dataset color. CIEDE2000 is the current industry standard for perceptual color difference — it accounts for known non-uniformities in human vision that simpler metrics like Euclidean RGB or even CIE76 miss.
+2. Pandamime computes the **CIEDE2000 (ΔE)** distance between the user's color and every dataset color. CIEDE2000 is the current industry standard for perceptual color difference — it accounts for known non-uniformities in human vision that simpler metrics like Euclidean RGB or even CIE76 miss.
 
 3. Results are ranked ascending by ΔE and the top N are returned.
 

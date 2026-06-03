@@ -1,4 +1,4 @@
-# Pantomime
+# Pandamime
 
 Pick any color — get the closest named Pantone® fashion colors by perceptual distance.
 
@@ -8,7 +8,7 @@ Pick any color — get the closest named Pantone® fashion colors by perceptual 
 
 ## What it does
 
-Pantomime is a free, client-side tool for developers and designers. Drop a color (color wheel, hex, or RGB) and get up to 10 perceptually closest named Pantone® fashion colors ranked by ΔE (CIEDE2000). Results include the color name, code, hex value, and a plain-words closeness cue.
+Pandamime is a free, client-side tool for developers and designers. Drop a color (color wheel, hex, or RGB) and get up to 10 perceptually closest named Pantone® fashion colors ranked by ΔE (CIEDE2000). Results include the color name, code, hex value, and a plain-words closeness cue.
 
 All matching runs in the browser — no backend, no API calls, no rate limits.
 

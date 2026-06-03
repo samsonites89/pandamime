@@ -1,6 +1,6 @@
 "use client";
 
-// Pixel art pantomime panda: white face, black eye patches (the face paint), red suspenders.
+// Pixel art pandamime panda: white face, black eye patches (the face paint), red suspenders.
 // Built as a grid of <rect> elements — no external assets.
 //
 // Color key:

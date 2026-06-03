@@ -79,7 +79,7 @@ function AppContent() {
         <Brand>
           <PandaMascot />
           <BrandText>
-            <WordMark>PANTOMIME</WordMark>
+            <WordMark>PANDAMIME</WordMark>
             <Tagline>find your closest Pantone® colors</Tagline>
           </BrandText>
         </Brand>
@@ -98,7 +98,7 @@ function AppContent() {
             <BlurbTitle>WHAT IS THIS?</BlurbTitle>
             <BlurbText>
               Drop any color — use the wheel or type a hex / RGB value.
-              Pantomime finds the closest named{" "}
+              Pandamime finds the closest named{" "}
               <Accent>Pantone® fashion colors</Accent> by perceptual distance
               (CIEDE2000 in Lab space), not by eye or RGB proximity.
             </BlurbText>
