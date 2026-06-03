@@ -3,12 +3,17 @@
 import styled from "styled-components";
 import { type PantoneMatch } from "@/lib/matcher";
 import ResultCard from "./ResultCard";
+import MiniCard from "./MiniCard";
 
 interface Props {
   matches: PantoneMatch[];
   count: number;
   onCountChange: (n: number) => void;
 }
+
+// Below this viewport width the 3-column grid leaves each cell too tight for
+// the full card, so each slot swaps to the compact MiniCard via CSS.
+const COMPACT_BREAKPOINT = "640px";
 
 export default function ResultsGrid({ matches, count, onCountChange }: Props) {
   return (
@@ -20,7 +25,7 @@ export default function ResultsGrid({ matches, count, onCountChange }: Props) {
           <Slider
             type="range"
             min={1}
-            max={10}
+            max={9}
             value={count}
             onChange={(e) => onCountChange(Number(e.target.value))}
             aria-label="Number of results"
@@ -32,13 +37,39 @@ export default function ResultsGrid({ matches, count, onCountChange }: Props) {
       ) : (
         <Grid>
           {matches.map((m, i) => (
-            <ResultCard key={m.code} match={m} rank={i + 1} />
+            // Each grid slot holds both variants; CSS shows the one that fits.
+            // Only one is ever visible, so the doubled DOM is inert.
+            <Slot key={m.code}>
+              <FullVariant>
+                <ResultCard match={m} rank={i + 1} />
+              </FullVariant>
+              <CompactVariant>
+                <MiniCard match={m} rank={i + 1} />
+              </CompactVariant>
+            </Slot>
           ))}
         </Grid>
       )}
     </Section>
   );
 }
+
+const Slot = styled.div`
+  min-width: 0;
+`;
+
+const FullVariant = styled.div`
+  @media (max-width: ${COMPACT_BREAKPOINT}) {
+    display: none;
+  }
+`;
+
+const CompactVariant = styled.div`
+  display: none;
+  @media (max-width: ${COMPACT_BREAKPOINT}) {
+    display: block;
+  }
+`;
 
 const Section = styled.section`
   width: 100%;
@@ -103,13 +134,12 @@ const Slider = styled.input`
 
 const Grid = styled.div`
   display: grid;
+  /* Always 3 columns; cells swap to MiniCard at narrow widths instead of
+     reflowing to fewer columns. */
   grid-template-columns: repeat(3, 1fr);
   gap: 16px;
-  @media (max-width: 640px) {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  @media (max-width: 400px) {
-    grid-template-columns: 1fr;
+  @media (max-width: ${COMPACT_BREAKPOINT}) {
+    gap: 8px;
   }
 `;
 
