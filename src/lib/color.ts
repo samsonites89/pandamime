@@ -61,3 +61,11 @@ export function clampChannel(value: string): number {
   const n = parseInt(value, 10);
   return isNaN(n) ? 0 : clampByte(n);
 }
+
+/** Returns '#000000' or '#ffffff' — whichever contrasts better against the given background. */
+export function getContrastColor(hex: string): string {
+  const { r, g, b } = hexToRgb(hex);
+  // Perceived luminance (ITU-R BT.601)
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.5 ? "#000000" : "#ffffff";
+}

@@ -5,15 +5,26 @@ import styled from "styled-components";
 import { converter, formatHex } from "culori";
 import { normalizeHex, hexToRgb, rgbToHex, clampChannel } from "@/lib/color";
 
-// HSL converter — used only for the lightness slider; all external state stays as #rrggbb.
 const toHsl = converter("hsl");
+
+// iro.js renders at a fixed pixel width, so it can't flex with CSS like the
+// inputs do. We measure the container and call iro's resize() to keep the
+// square box matching its column. On desktop the picker sits in a ~260px
+// column; when the layout collapses to a single column it may stretch up to
+// this cap so it uses the extra width without becoming unwieldy.
+const MAX_PICKER_WIDTH = 600;
+const FALLBACK_WIDTH = 260;
+
+function pickerWidthFrom(el: HTMLElement | null): number {
+  const w = el?.clientWidth || FALLBACK_WIDTH;
+  return Math.min(Math.round(w), MAX_PICKER_WIDTH);
+}
 
 function getLightness(hex: string): number {
   const hsl = toHsl(hex);
   return Math.round((hsl?.l ?? 0.5) * 100);
 }
 
-// Returns the pure-hue midpoint color (#rrggbb at L=50%) for the gradient track.
 function getMidColor(hex: string): string {
   const hsl = toHsl(hex);
   if (!hsl) return "#888888";
@@ -21,7 +32,7 @@ function getMidColor(hex: string): string {
 }
 
 interface Props {
-  value: string; // canonical #rrggbb
+  value: string;
   onChange: (hex: string) => void;
 }
 
@@ -38,7 +49,6 @@ export default function ColorPicker({ value, onChange }: Props) {
   const [hexError, setHexError] = useState(false);
   const [lightness, setLightness] = useState(() => getLightness(value));
 
-  // Keep all text fields and lightness in sync when value changes from outside.
   useEffect(() => {
     setHexInput(value.slice(1).toUpperCase());
     const { r, g, b } = hexToRgb(value);
@@ -47,7 +57,6 @@ export default function ColorPicker({ value, onChange }: Props) {
     setLightness(getLightness(value));
   }, [value]);
 
-  // Initialize iro.js wheel after mount (requires DOM + browser APIs).
   useEffect(() => {
     let picker: { color: { hexString: string }; on: (e: string, cb: (c: { hexString: string }) => void) => void; off: (e: string, cb: unknown) => void; destroy: () => void } | null = null;
 
@@ -57,7 +66,10 @@ export default function ColorPicker({ value, onChange }: Props) {
       const iroUi = (iro as unknown as { ui: { Box: unknown; Slider: unknown } }).ui;
       picker = new (iro as unknown as { ColorPicker: new (el: HTMLDivElement, opts: object) => typeof picker }
       ).ColorPicker(wheelRef.current, {
-        width: 200,
+        // Start at the container's current width; the ResizeObserver below keeps
+        // it in sync as the layout reflows. (wheelRef is full-width until iro
+        // injects its own sized canvas, so this reads the available width.)
+        width: pickerWidthFrom(wheelRef.current),
         color: value,
         layout: [
           { component: iroUi.Box },
@@ -70,6 +82,13 @@ export default function ColorPicker({ value, onChange }: Props) {
       });
 
       iroRef.current = picker;
+
+      // Remove rounded corners from all SVG rect elements (rx/ry are not
+      // overridable via CSS, so we patch them directly after init).
+      wheelRef.current.querySelectorAll("rect").forEach((rect) => {
+        rect.setAttribute("rx", "0");
+        rect.setAttribute("ry", "0");
+      });
 
       const onColorChange = (color: { hexString: string }) => {
         if (suppressRef.current) return;
@@ -88,7 +107,6 @@ export default function ColorPicker({ value, onChange }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Sync wheel when value changes from any text input or slider.
   useEffect(() => {
     const picker = iroRef.current as { color: { hexString: string } } | null;
     if (!picker) return;
@@ -96,6 +114,20 @@ export default function ColorPicker({ value, onChange }: Props) {
     picker.color.hexString = value;
     suppressRef.current = false;
   }, [value]);
+
+  // Keep iro's width in sync with its container as the layout reflows. We watch
+  // wheelRef (full-width; unaffected by iro's own sized canvas inside it) so
+  // resizing iro never feeds back into the observed element.
+  useEffect(() => {
+    const el = wheelRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(() => {
+      const picker = iroRef.current as { resize?: (w: number) => void } | null;
+      picker?.resize?.(pickerWidthFrom(el));
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   const handleHexChange = useCallback(
     (raw: string) => {
@@ -128,7 +160,6 @@ export default function ColorPicker({ value, onChange }: Props) {
     [rgbInput, onChange]
   );
 
-  // Swap only the L channel in HSL space; hue and saturation are preserved.
   const handleLightnessChange = useCallback(
     (pct: number) => {
       setLightness(pct);
@@ -146,8 +177,12 @@ export default function ColorPicker({ value, onChange }: Props) {
 
   return (
     <Wrapper>
-      <WheelContainer ref={wheelRef} />
-      <Preview style={{ background: value }} aria-label={`Current color: ${value}`} />
+      {/* WheelContainer + Preview pinned to PICKER_WIDTH so they stay flush */}
+      <PickerFrame>
+        <WheelContainer ref={wheelRef} />
+        <Preview style={{ background: value }} aria-label={`Current color: ${value}`} />
+      </PickerFrame>
+
       <Fields>
         <FieldGroup>
           <Label $error={hexError}>HEX</Label>
@@ -162,6 +197,7 @@ export default function ColorPicker({ value, onChange }: Props) {
           />
           {hexError && <ErrorHint>invalid hex</ErrorHint>}
         </FieldGroup>
+
         <RgbRow>
           {(["r", "g", "b"] as const).map((ch) => (
             <FieldGroup key={ch}>
@@ -214,22 +250,56 @@ export default function ColorPicker({ value, onChange }: Props) {
 const Wrapper = styled.div`
   display: flex;
   flex-direction: column;
-  align-items: center;
   gap: 16px;
+  /* Fill the column up to a sensible cap, then center so the picker block stays
+     comfortable (and aligned with its inputs) when the layout is single-column. */
+  width: 100%;
+  max-width: ${MAX_PICKER_WIDTH}px;
+  margin: 0 auto;
+  /* Allow shrinking below the iro canvas's intrinsic width (see WheelContainer). */
+  min-width: 0;
+`;
+
+const PickerFrame = styled.div`
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  /* No border-radius anywhere inside iro.js */
+  & * {
+    border-radius: 0 !important;
+  }
 `;
 
 const WheelContainer = styled.div`
+  width: 100%;
   line-height: 0;
+  font-size: 0;
+  /* iro injects a fixed-width canvas. Without this, that canvas's intrinsic
+     width sets a min-content size that props the column open and prevents it
+     from shrinking back down on resize. Clipping resets the automatic minimum
+     to 0 so the container tracks available width and the ResizeObserver can
+     drive iro back down. (Handles stay within the canvas, so nothing visible
+     is clipped.) */
+  min-width: 0;
+  overflow: hidden;
+  /* iro.js renders each component's <svg> as display:inline by default, which
+     leaves baseline descender space below the last element (the hue slider) —
+     that's the gap. Forcing the svgs to block removes it so Preview sits flush. */
+  & svg {
+    display: block;
+  }
 `;
 
 const Preview = styled.div`
   width: 100%;
-  height: 32px;
-  border: 2px solid #333;
-  box-shadow:
-    -2px -2px 0 #111,
-    2px 2px 0 #555;
-  image-rendering: pixelated;
+  height: 24px;
+  /* Match the iro Box, which is full-bleed (borderWidth: 0). A border here
+     would eat 2px each side under the global box-sizing:border-box, making the
+     swatch visibly narrower than the picker above it — so go borderless too. */
+  /* iro's own inter-element spacing is sliderMargin (12px); reuse it so the
+     swatch sits in the same vertical rhythm as the Box→Slider gap. */
+  margin-top: 12px;
 `;
 
 const Fields = styled.div`
@@ -249,14 +319,15 @@ const FieldGroup = styled.div`
 const Label = styled.label<{ $error?: boolean }>`
   font-family: "Pixelify Sans", monospace;
   font-size: 12px;
-  color: ${(p) => (p.$error ? "#cc2222" : "#888")};
+  font-weight: 700;
+  color: ${(p) => (p.$error ? "#cc2222" : "#999")};
   letter-spacing: 1px;
 `;
 
 const baseInput = `
   background: #111;
-  border: 2px solid #333;
-  color: #f5f5f0;
+  border: 2px solid #3a3a3a;
+  color: #f0f0f0;
   font-family: "Courier New", monospace;
   font-size: 14px;
   padding: 6px 8px;
@@ -270,7 +341,7 @@ const baseInput = `
 
 const HexInput = styled.input<{ $error?: boolean }>`
   ${baseInput}
-  border-color: ${(p) => (p.$error ? "#cc2222" : "#333")};
+  border-color: ${(p) => (p.$error ? "#cc2222" : "#3a3a3a")};
   text-transform: uppercase;
 `;
 
@@ -298,8 +369,6 @@ const ErrorHint = styled.span`
   left: 0;
 `;
 
-// ─── Lightness slider ────────────────────────────────────────────────────────
-
 const LightnessGroup = styled.div`
   display: flex;
   flex-direction: column;
@@ -316,7 +385,7 @@ const LightnessHeader = styled.div`
 const LightnessPct = styled.span`
   font-family: "Courier New", monospace;
   font-size: 12px;
-  color: #666;
+  color: #aaa;
 `;
 
 const SliderTrackWrapper = styled.div`
@@ -331,7 +400,7 @@ const SliderTrack = styled.div`
   left: 0;
   right: 0;
   height: 8px;
-  border: 2px solid #333;
+  border: 2px solid #3a3a3a;
   pointer-events: none;
 `;
 
@@ -351,7 +420,7 @@ const LightnessSlider = styled.input`
     width: 12px;
     height: 16px;
     background: #cc2222;
-    border: 2px solid #f5f5f0;
+    border: 2px solid #f0f0f0;
     cursor: pointer;
     image-rendering: pixelated;
   }
@@ -359,7 +428,7 @@ const LightnessSlider = styled.input`
     width: 12px;
     height: 16px;
     background: #cc2222;
-    border: 2px solid #f5f5f0;
+    border: 2px solid #f0f0f0;
     cursor: pointer;
   }
 `;
@@ -369,10 +438,8 @@ const SliderEndLabels = styled.div`
   justify-content: space-between;
   font-family: "Pixelify Sans", monospace;
   font-size: 10px;
-  color: #444;
+  color: #666;
 `;
-
-// ─── Color info ──────────────────────────────────────────────────────────────
 
 const ColorInfo = styled.div`
   margin-top: 4px;
@@ -387,11 +454,12 @@ const InfoRow = styled.div`
 const InfoLabel = styled.span`
   font-family: "Pixelify Sans", monospace;
   font-size: 11px;
-  color: #555;
+  font-weight: 700;
+  color: #666;
 `;
 
 const InfoValue = styled.span`
   font-family: "Courier New", monospace;
   font-size: 12px;
-  color: #666;
+  color: #999;
 `;
