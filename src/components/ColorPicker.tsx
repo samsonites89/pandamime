@@ -63,14 +63,17 @@ export default function ColorPicker({ value, onChange }: Props) {
   }
 
   useEffect(() => {
-    let picker: { color: { hexString: string }; on: (e: string, cb: (c: { hexString: string }) => void) => void; off: (e: string, cb: unknown) => void; destroy: () => void } | null = null;
+    type IroPicker = { color: { hexString: string }; on: (e: string, cb: (c: { hexString: string }) => void) => void; off: (e: string, cb: unknown) => void; destroy: () => void };
+    let cancelled = false;
+    let picker: IroPicker | null = null;
     let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+    let onColorChange: ((c: { hexString: string }) => void) | null = null;
 
     import("@jaames/iro").then(({ default: iro }) => {
-      if (!wheelRef.current) return;
+      if (cancelled || !wheelRef.current) return;
 
       const iroUi = (iro as unknown as { ui: { Box: unknown; Slider: unknown } }).ui;
-      picker = new (iro as unknown as { ColorPicker: new (el: HTMLDivElement, opts: object) => typeof picker }
+      picker = new (iro as unknown as { ColorPicker: new (el: HTMLDivElement, opts: object) => IroPicker }
       ).ColorPicker(wheelRef.current, {
         // Start at the container's current width; the ResizeObserver below keeps
         // it in sync as the layout reflows. (wheelRef is full-width until iro
@@ -99,7 +102,7 @@ export default function ColorPicker({ value, onChange }: Props) {
       // Canvas is in the DOM now — drop the skeleton.
       setReady(true);
 
-      const onColorChange = (color: { hexString: string }) => {
+      onColorChange = (color: { hexString: string }) => {
         if (suppressRef.current) return;
         // Debounce at 80ms so rapid drag events don't flood the parent with
         // re-renders and URL updates while still feeling live.
@@ -108,18 +111,15 @@ export default function ColorPicker({ value, onChange }: Props) {
         debounceTimer = setTimeout(() => onChange(hex), 200);
       };
 
-      picker!.on("color:change", onColorChange);
-
-      return () => {
-        if (debounceTimer) clearTimeout(debounceTimer);
-        picker!.off("color:change", onColorChange);
-        picker!.destroy();
-      };
+      picker.on("color:change", onColorChange);
     });
 
     return () => {
+      cancelled = true;
       if (debounceTimer) clearTimeout(debounceTimer);
-      picker?.destroy();
+      if (picker && onColorChange) picker.off("color:change", onColorChange);
+      if (typeof picker?.destroy === "function") picker.destroy();
+      iroRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

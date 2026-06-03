@@ -1,43 +1,58 @@
 "use client";
 
-import styled from "styled-components";
+import styled, { keyframes } from "styled-components";
+import Link from "next/link";
 import Disclaimer from "@/components/Disclaimer";
 import PandaMascot from "@/components/PandaMascot";
 
 export default function About() {
   return (
     <Page>
-      <Header>
-        <Brand href="/">
+      <Header style={{ viewTransitionName: "site-header" } as React.CSSProperties}>
+        <Brand href="/" transitionTypes={["nav-back"]}>
           <PandaMascot />
           <WordMark>PANDAMIME</WordMark>
         </Brand>
       </Header>
 
       <Content>
-        <Title>METHODOLOGY</Title>
+        <Title>📐 METHODOLOGY</Title>
 
         <Section>
-          <SectionTitle>HOW THE DATASET WAS BUILT</SectionTitle>
+          <SectionTitle>🔧 HOW THE DATASET WAS BUILT</SectionTitle>
           <Body>
-            The color data comes from publicly visible Pantone® color chip images
-            (cotton TCX, paper TPG, and polyester TSX fashion books). A Python
-            script swept the RGB cube, queried Pantone&apos;s color-finder to collect
-            named color codes, then downloaded each chip image and sampled the
-            center pixel to derive a hex value. Those hex values are{" "}
-            <Strong>self-sampled approximations</Strong> — not official Pantone
-            data. Cotton and paper entries that share the same numbering system
-            are merged into a single record; polyester remains separate.
+            The color data comes from <Strong>publicly visible Pantone® color chip images</Strong>
+            (cotton TCX, paper TPG, polyester TSX, Nylon Brights TN, and Metallic Shimmers TPM fashion books). A Python script
+            swept the RGB cube, queried Pantone&apos;s color-finder to collect named color
+            codes, then downloaded each chip image and sampled the center pixel to
+            derive a hex value. Those hex values are{" "}
+            <Strong>self-sampled approximations</Strong> — not official Pantone data.
+            Cotton and paper entries that share the same numbering system are merged
+            into a single record; polyester remains separate.
           </Body>
           <Body>
-            The dataset covers 1,900+ named fashion colors across three books.
+            <Strong>The dataset covers 3,100+ named fashion colors across five books.</Strong>
+            Only colors with a human-readable name (e.g. <em>Cyber Yellow</em>,{" "}
+            <em>Classic Blue</em>) are included — unnamed numeric-only entries
+            are intentionally excluded. Just because. :)
+          </Body>
+          <Body>
             It can be regenerated at any time by running{" "}
-            <Code>collect_pantone.py</Code> (included in the repository).
+            <Code>
+              <a
+                href="https://github.com/samsonites89/pandamime/blob/main/scripts/collect_pantone.py"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                collect_pantone.py
+              </a>
+            </Code>{" "}
+            (included in the repository).
           </Body>
         </Section>
 
         <Section>
-          <SectionTitle>HOW MATCHING WORKS</SectionTitle>
+          <SectionTitle>🔬 HOW MATCHING WORKS</SectionTitle>
           <Body>
             When you pick a color, Pandamime converts it — and every color in the
             dataset — into <Strong>CIELAB color space</Strong>, which approximates
@@ -71,18 +86,18 @@ export default function About() {
         </Section>
 
         <Section>
-          <SectionTitle>IMPORTANT LIMITATIONS</SectionTitle>
+          <SectionTitle>⚠️ IMPORTANT LIMITATIONS</SectionTitle>
           <Body>
-            Screen color ≠ printed spot ink. Pantone® colors are physical
+            <Strong>Screen color ≠ printed spot ink.</Strong> Pantone® colors are physical
             standardized inks; what you see on a monitor is an RGB approximation
             that varies by display calibration, profile, and ambient light. No
-            software tool can give you a print-accurate match — only an official
-            Pantone physical swatch can do that.
+            software tool can give you a print-accurate match — only an{" "}
+            <Strong>official Pantone physical swatch</Strong> can do that.
           </Body>
           <Body>
             The hex values in this dataset were sampled from displayed chip images,
-            not measured from physical ink samples. Treat all results as a
-            starting point for conversation with a print vendor or designer, not
+            not measured from physical ink samples. Treat all results as a{" "}
+            <Strong>starting point</Strong> for conversation with a print vendor or designer, not
             as a production specification.
           </Body>
         </Section>
@@ -92,11 +107,21 @@ export default function About() {
           <Disclaimer />
         </DisclaimerBox>
 
-        <BackLink href="/">← BACK TO PICKER</BackLink>
+        <BackLink href="/" transitionTypes={["nav-back"]}>← BACK TO PICKER</BackLink>
       </Content>
     </Page>
   );
 }
+
+const fadeInUp = keyframes`
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+`;
+
+const slideDown = keyframes`
+  from { opacity: 0; transform: translateY(-12px); }
+  to   { opacity: 1; transform: translateY(0); }
+`;
 
 const Page = styled.div`
   min-height: 100vh;
@@ -107,9 +132,14 @@ const Page = styled.div`
 const Header = styled.header`
   padding: 20px 32px;
   border-bottom: 2px solid #1a1a1a;
+  animation: ${slideDown} 0.35s ease both;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
 `;
 
-const Brand = styled.a`
+const Brand = styled(Link)`
   display: flex;
   align-items: center;
   gap: 16px;
@@ -130,11 +160,16 @@ const Content = styled.main`
   display: flex;
   flex-direction: column;
   gap: 48px;
+  animation: ${fadeInUp} 0.4s ease 0.1s both;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
 `;
 
 const Title = styled.h1`
   font-family: "Pixelify Sans", monospace;
-  font-size: 22px;
+  font-size: 28px;
   color: #f5f5f0;
   letter-spacing: 2px;
 `;
@@ -147,7 +182,7 @@ const Section = styled.section`
 
 const SectionTitle = styled.h2`
   font-family: "Pixelify Sans", monospace;
-  font-size: 14px;
+  font-size: 17px;
   color: #cc2222;
   letter-spacing: 1px;
 `;
@@ -169,6 +204,15 @@ const Code = styled.code`
   color: #cc2222;
   background: #1a1a1a;
   padding: 1px 4px;
+
+  a {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    &:hover {
+      color: #ff4444;
+    }
+  }
 `;
 
 const DeltaTable = styled.div`
@@ -200,8 +244,8 @@ const DeltaLabel = styled.span<{ $color: string }>`
 
 const DisclaimerBox = styled.div`
   padding: 20px;
-  background: #111;
-  border: 2px solid #1a1a1a;
+  background: #0f0c00;
+  border: 2px solid #cc8800;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -209,12 +253,12 @@ const DisclaimerBox = styled.div`
 
 const DisclaimerTitle = styled.h3`
   font-family: "Pixelify Sans", monospace;
-  font-size: 12px;
-  color: #444;
+  font-size: 14px;
+  color: #cc8800;
   letter-spacing: 1px;
 `;
 
-const BackLink = styled.a`
+const BackLink = styled(Link)`
   font-family: "Pixelify Sans", monospace;
   font-size: 13px;
   color: #555;

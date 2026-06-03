@@ -11,6 +11,8 @@ You've got a hex code. You need a Pantone name. You open Pantone's website, hit 
 
 **Pandamime** is the free, offline alternative. Drop any color — hex, RGB, or color wheel — and get up to 10 perceptually closest named Pantone® fashion colors, ranked by actual human eye distance (CIEDE2000), not by which RGB number is nearest.
 
+Covers **3,100+ colors** across five Pantone fashion books: cotton (TCX), paper (TPG), polyester (TSX), Nylon Brights (TN), and Metallic Shimmers (TPM).
+
 No account. No paywall. No backend. Everything runs in your browser.
 
 > **Not affiliated with or endorsed by Pantone LLC. PANTONE® is a registered trademark of Pantone LLC. Color matches are approximate and for reference only — verify against an official Pantone guide before production use.**
@@ -19,7 +21,7 @@ No account. No paywall. No backend. Everything runs in your browser.
 
 ## Why this exists
 
-**Pantone** is the global standard for color communication. If you've ever worked on print, fashion, product design, or brand identity, you've encountered it: a system of 1,900+ named, numbered colors — things like *Cyber Yellow 14-0760 TCX* or *Classic Blue 19-4052 TCX* — each with a precisely defined ink formula that prints the same on a swatch in Tokyo as it does in Toronto.
+**Pantone** is the global standard for color communication. If you've ever worked on print, fashion, product design, or brand identity, you've encountered it: a system of 3,100+ named, numbered colors — things like *Cyber Yellow 14-0760 TCX* or *Classic Blue 19-4052 TCX* — each with a precisely defined ink formula that prints the same on a swatch in Tokyo as it does in Toronto.
 
 Pantone colors are everywhere. Brand guidelines specify them. Fabric suppliers quote them. Printer proofs use them. When a designer says "use Pantone 485," everyone in the supply chain knows exactly what red that means.
 
@@ -33,7 +35,7 @@ Pandamime was built to close that gap — a fast, free, perceptually accurate re
 
 Drop a color (color wheel, hex, or RGB) and get up to 10 perceptually closest named Pantone® fashion colors ranked by **ΔE (CIEDE2000)** — the industry-standard metric for how different two colors look to the human eye. Results include the color name, code, hex value, and a plain-words closeness cue.
 
-Covers **1,900+ colors** across three Pantone fashion books: cotton (TCX), paper (TPG), and polyester (TSX).
+Covers **3,100+ colors** across five Pantone fashion books: cotton (TCX), paper (TPG), polyester (TSX), Nylon Brights (TN), and Metallic Shimmers (TPM).
 
 All matching runs in the browser — no backend, no API calls, no rate limits.
 
@@ -71,7 +73,9 @@ npm test
 
 ## Data
 
-The dataset lives at `src/data/named_table_collapsed.json`: ~1,900+ named Pantone® fashion colors (cotton TCX, paper TPG, polyester TSX) with self-sampled hex values. It was produced by `collect_pantone.py` (in `wip/`) — see [docs/METHODOLOGY.md](docs/METHODOLOGY.md) for how the data was collected and what its limitations are.
+The dataset lives at `src/data/named_table_collapsed.json`: 3,100+ named Pantone® fashion colors (cotton TCX, paper TPG, polyester TSX, Nylon Brights TN, Metallic Shimmers TPM) with self-sampled hex values. It was produced by `scripts/collect_pantone.py` — see [docs/METHODOLOGY.md](docs/METHODOLOGY.md) for how the data was collected and what its limitations are.
+
+> **Why not all Pantone colors?** The collection script discovers colors by querying Pantone's color-finder with hex values sampled across the RGB cube. It only retains colors that have a human-readable name (e.g. *Cyber Yellow*, *Classic Blue*). Unnamed numeric-only entries — which exist in some books — are intentionally excluded, since a nameless code is not useful as a reference for designers or vendors.
 
 ### Schema
 
@@ -91,7 +95,7 @@ The dataset lives at `src/data/named_table_collapsed.json`: ~1,900+ named Panton
 - `hex` — self-sampled approximation from the public chip image
 - `materials` — which fashion books this color appears in
 
-To rebuild the dataset: `cd wip && python collect_pantone.py --collapse`
+To rebuild the dataset: `python scripts/collect_pantone.py all --collapse`
 
 ## URL state
 
