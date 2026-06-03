@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { Suspense } from "react";
 import styled, { keyframes, css } from "styled-components";
 import ColorPicker from "@/components/ColorPicker";
@@ -149,16 +150,23 @@ function AppContent() {
   return (
     <Page>
       <LoadingScreen hidden={loaded} />
-      <Header>
+      <Header style={{ viewTransitionName: "site-header" } as React.CSSProperties}>
         <Brand>
           <MascotFloat><PandaMascot /></MascotFloat>
           <BrandText>
-            <WordMark>PANDAMIME</WordMark>
+            <TitleRow>
+              <WordMark>PANDAMIME</WordMark>
+              <PaletteGrid>
+                {["#e8524a","#f5a623","#f7e03a","#6ab04c","#4a90d9","#9b59b6"].map((c) => (
+                  <PaletteSquare key={c} style={{ background: c }} />
+                ))}
+              </PaletteGrid>
+            </TitleRow>
             <Tagline>find your closest Pantone® colors</Tagline>
           </BrandText>
         </Brand>
         <Nav>
-          <NavLink href="/about">ABOUT</NavLink>
+          <NavLink href="/about" transitionTypes={["nav-forward"]}>ABOUT</NavLink>
         </Nav>
       </Header>
 
@@ -172,9 +180,9 @@ function AppContent() {
             </FindMatchesButton>
           </PickerPanel>
           <HeroBlurb>
-            <BlurbTitle>WHAT IS THIS?</BlurbTitle>
+            <BlurbTitle>🎨 WHAT IS THIS?</BlurbTitle>
             <BlurbText>
-              Drop any color — use the wheel or type a hex / RGB value.
+              <Strong>Drop any color</Strong> — use the wheel or type a hex / RGB value.
               Pandamime finds the closest named{" "}
               <Accent>Pantone® fashion colors</Accent> by perceptual distance
               (CIEDE2000 in Lab space), not by eye or RGB proximity.
@@ -186,15 +194,15 @@ function AppContent() {
             </BlurbText>
             <StatRow>
               <Stat>
-                <StatNum>1,900+</StatNum>
+                <StatNum>🎨 3,100+</StatNum>
                 <StatLabel>NAMED COLORS</StatLabel>
               </Stat>
               <Stat>
-                <StatNum>3</StatNum>
+                <StatNum>📚 FIVE</StatNum>
                 <StatLabel>FASHION BOOKS</StatLabel>
               </Stat>
               <Stat>
-                <StatNum>ΔE</StatNum>
+                <StatNum>🔬 ΔE</StatNum>
                 <StatLabel>CIEDE2000</StatLabel>
               </Stat>
             </StatRow>
@@ -228,9 +236,9 @@ function AppContent() {
       <Footer>
         <Disclaimer />
         <FooterLinks>
-          <NavLink href="/about">methodology</NavLink>
+          <NavLink href="/about" transitionTypes={["nav-forward"]}>methodology</NavLink>
           <FooterSep>·</FooterSep>
-          <FooterNote>dataset: sampled from public Pantone® color chips</FooterNote>
+          <FooterNote>🖼️ dataset: sampled from public Pantone® color chips</FooterNote>
         </FooterLinks>
         <FooterCopy>© {new Date().getFullYear()} Pandamime. All rights reserved.</FooterCopy>
       </Footer>
@@ -317,6 +325,26 @@ const Brand = styled.div`
   }
 `;
 
+const TitleRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+`;
+
+const PaletteGrid = styled.div`
+  display: flex;
+  gap: 3px;
+
+  @media (max-width: 480px) {
+    display: none;
+  }
+`;
+
+const PaletteSquare = styled.div`
+  width: 10px;
+  height: 10px;
+`;
+
 const MascotFloat = styled.div`
   animation: ${float} 3s ease-in-out infinite;
   line-height: 0;
@@ -342,21 +370,30 @@ const BrandText = styled.div`
 const WordMark = styled.span`
   font-family: "Pixelify Sans", monospace;
   font-size: 32px;
-  font-weight: 700;
+  font-weight: 400;
   color: #f5f5f0;
   letter-spacing: 3px;
   line-height: 1;
+  transition: color 0.15s ease, letter-spacing 0.15s ease;
+
+  &:hover {
+    color: #cc2222;
+    letter-spacing: 5px;
+  }
 
   @media (max-width: 480px) {
     font-size: 22px;
     letter-spacing: 2px;
+    &:hover {
+      letter-spacing: 3px;
+    }
   }
 `;
 
 const Tagline = styled.span`
   font-family: "Pixelify Sans", monospace;
-  font-size: 12px;
-  font-weight: 400;
+  font-size: 14px;
+  font-weight: 300;
   color: #cc2222;
   letter-spacing: 1px;
 
@@ -371,7 +408,7 @@ const Nav = styled.nav`
   gap: 20px;
 `;
 
-const NavLink = styled.a`
+const NavLink = styled(Link)`
   font-family: "Pixelify Sans", monospace;
   font-size: 13px;
   font-weight: 400;
@@ -452,7 +489,7 @@ const HeroBlurb = styled.div`
 
 const BlurbTitle = styled.h2`
   font-family: "Pixelify Sans", monospace;
-  font-size: 16px;
+  font-size: 19px;
   font-weight: 700;
   color: #f5f5f0;
   letter-spacing: 1px;
@@ -467,6 +504,11 @@ const BlurbText = styled.p`
 const Accent = styled.em`
   font-style: normal;
   color: #cc2222;
+`;
+
+const Strong = styled.strong`
+  color: #f5f5f0;
+  font-weight: 700;
 `;
 
 const StatRow = styled.div`
@@ -484,7 +526,7 @@ const Stat = styled.div`
 const StatNum = styled.span`
   font-family: "Pixelify Sans", monospace;
   font-size: 20px;
-  font-weight: 700;
+  font-weight: 500;
   color: #f5f5f0;
 `;
 
