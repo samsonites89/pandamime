@@ -9,7 +9,7 @@ import ResultsGrid from "@/components/ResultsGrid";
 import Disclaimer from "@/components/Disclaimer";
 import PandaMascot from "@/components/PandaMascot";
 import { findClosest, type PantoneMatch } from "@/lib/matcher";
-import { normalizeHex } from "@/lib/color";
+import { normalizeHex, getContrastColor } from "@/lib/color";
 
 const DEFAULT_COLOR = "#cc2222";
 const DEFAULT_COUNT = 5;
@@ -126,8 +126,10 @@ function AppContent() {
       </Hero>
 
       <Main>
-        <ColorPreviewBar style={{ background: color }} aria-hidden="true">
-          <PreviewLabel>{color.toUpperCase()}</PreviewLabel>
+        <ColorPreviewBar style={{ background: color }}>
+          <PreviewLabel style={{ color: getContrastColor(color) }}>
+            {color.toUpperCase()}
+          </PreviewLabel>
         </ColorPreviewBar>
         <ResultsGrid
           matches={matches}
@@ -143,6 +145,7 @@ function AppContent() {
           <FooterSep>·</FooterSep>
           <FooterNote>dataset: sampled from public Pantone® color chips</FooterNote>
         </FooterLinks>
+        <FooterCopy>© {new Date().getFullYear()} Pandamime. All rights reserved.</FooterCopy>
       </Footer>
     </Page>
   );
@@ -184,15 +187,17 @@ const BrandText = styled.div`
 
 const WordMark = styled.span`
   font-family: "Pixelify Sans", monospace;
-  font-size: 24px;
+  font-size: 32px;
+  font-weight: 700;
   color: #f5f5f0;
-  letter-spacing: 2px;
+  letter-spacing: 3px;
   line-height: 1;
 `;
 
 const Tagline = styled.span`
   font-family: "Pixelify Sans", monospace;
   font-size: 12px;
+  font-weight: 400;
   color: #cc2222;
   letter-spacing: 1px;
 `;
@@ -205,7 +210,8 @@ const Nav = styled.nav`
 const NavLink = styled.a`
   font-family: "Pixelify Sans", monospace;
   font-size: 13px;
-  color: #555;
+  font-weight: 400;
+  color: #888;
   text-decoration: none;
   &:hover {
     color: #cc2222;
@@ -239,7 +245,8 @@ const PickerPanel = styled.div`
 const PanelLabel = styled.p`
   font-family: "Pixelify Sans", monospace;
   font-size: 12px;
-  color: #555;
+  font-weight: 700;
+  color: #888;
   letter-spacing: 1px;
 `;
 
@@ -253,13 +260,14 @@ const HeroBlurb = styled.div`
 const BlurbTitle = styled.h2`
   font-family: "Pixelify Sans", monospace;
   font-size: 16px;
+  font-weight: 700;
   color: #f5f5f0;
   letter-spacing: 1px;
 `;
 
 const BlurbText = styled.p`
   font-size: 13px;
-  color: #888;
+  color: #aaa;
   line-height: 1.8;
 `;
 
@@ -283,13 +291,15 @@ const Stat = styled.div`
 const StatNum = styled.span`
   font-family: "Pixelify Sans", monospace;
   font-size: 20px;
+  font-weight: 700;
   color: #f5f5f0;
 `;
 
 const StatLabel = styled.span`
   font-family: "Pixelify Sans", monospace;
   font-size: 11px;
-  color: #444;
+  font-weight: 400;
+  color: #777;
   letter-spacing: 1px;
 `;
 
@@ -305,20 +315,20 @@ const Main = styled.main`
 `;
 
 const ColorPreviewBar = styled.div`
-  height: 8px;
+  height: 36px;
   width: 100%;
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  padding-right: 8px;
-  image-rendering: pixelated;
+  padding-right: 12px;
 `;
 
 const PreviewLabel = styled.span`
   font-family: "Pixelify Sans", monospace;
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.5);
-  mix-blend-mode: difference;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  /* color is set inline via getContrastColor */
 `;
 
 const Footer = styled.footer`
@@ -338,12 +348,20 @@ const FooterLinks = styled.div`
 `;
 
 const FooterSep = styled.span`
-  color: #333;
+  color: #444;
   font-size: 12px;
 `;
 
 const FooterNote = styled.span`
   font-family: "Courier New", monospace;
   font-size: 11px;
-  color: #333;
+  color: #555;
+`;
+
+const FooterCopy = styled.p`
+  font-family: "Pixelify Sans", monospace;
+  font-size: 11px;
+  font-weight: 400;
+  color: #444;
+  letter-spacing: 0.5px;
 `;

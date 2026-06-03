@@ -107,8 +107,9 @@ const TopRow = styled.div`
 
 const Rank = styled.span`
   font-family: "Pixelify Sans", monospace;
-  font-size: 12px;
-  color: #444;
+  font-size: 15px;
+  font-weight: 700;
+  color: #666;
 `;
 
 const DeltaE = styled.div`
@@ -137,7 +138,8 @@ const DeltaLabel = styled.div<{ $rating: string }>`
 
 const ColorName = styled.h3`
   font-family: "Pixelify Sans", monospace;
-  font-size: 13px;
+  font-size: 15px;
+  font-weight: 700;
   color: #f5f5f0;
   line-height: 1.6;
   margin: 0;
@@ -182,7 +184,8 @@ const Materials = styled.div`
 const MaterialTag = styled.span`
   font-family: "Pixelify Sans", monospace;
   font-size: 10px;
-  color: #555;
-  padding: 2px 5px;
-  border: 1px solid #333;
+  font-weight: 400;
+  color: #cc2222;
+  padding: 2px 6px;
+  border: 1px solid #cc2222;
 `;

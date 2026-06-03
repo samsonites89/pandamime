@@ -5,15 +5,16 @@ import styled from "styled-components";
 import { converter, formatHex } from "culori";
 import { normalizeHex, hexToRgb, rgbToHex, clampChannel } from "@/lib/color";
 
-// HSL converter — used only for the lightness slider; all external state stays as #rrggbb.
 const toHsl = converter("hsl");
+
+// Width shared between iro.js and the preview bar so they stay aligned.
+const PICKER_WIDTH = 260;
 
 function getLightness(hex: string): number {
   const hsl = toHsl(hex);
   return Math.round((hsl?.l ?? 0.5) * 100);
 }
 
-// Returns the pure-hue midpoint color (#rrggbb at L=50%) for the gradient track.
 function getMidColor(hex: string): string {
   const hsl = toHsl(hex);
   if (!hsl) return "#888888";
@@ -21,7 +22,7 @@ function getMidColor(hex: string): string {
 }
 
 interface Props {
-  value: string; // canonical #rrggbb
+  value: string;
   onChange: (hex: string) => void;
 }
 
@@ -38,7 +39,6 @@ export default function ColorPicker({ value, onChange }: Props) {
   const [hexError, setHexError] = useState(false);
   const [lightness, setLightness] = useState(() => getLightness(value));
 
-  // Keep all text fields and lightness in sync when value changes from outside.
   useEffect(() => {
     setHexInput(value.slice(1).toUpperCase());
     const { r, g, b } = hexToRgb(value);
@@ -47,7 +47,6 @@ export default function ColorPicker({ value, onChange }: Props) {
     setLightness(getLightness(value));
   }, [value]);
 
-  // Initialize iro.js wheel after mount (requires DOM + browser APIs).
   useEffect(() => {
     let picker: { color: { hexString: string }; on: (e: string, cb: (c: { hexString: string }) => void) => void; off: (e: string, cb: unknown) => void; destroy: () => void } | null = null;
 
@@ -57,7 +56,7 @@ export default function ColorPicker({ value, onChange }: Props) {
       const iroUi = (iro as unknown as { ui: { Box: unknown; Slider: unknown } }).ui;
       picker = new (iro as unknown as { ColorPicker: new (el: HTMLDivElement, opts: object) => typeof picker }
       ).ColorPicker(wheelRef.current, {
-        width: 200,
+        width: PICKER_WIDTH,
         color: value,
         layout: [
           { component: iroUi.Box },
@@ -70,6 +69,13 @@ export default function ColorPicker({ value, onChange }: Props) {
       });
 
       iroRef.current = picker;
+
+      // Remove rounded corners from all SVG rect elements (rx/ry are not
+      // overridable via CSS, so we patch them directly after init).
+      wheelRef.current.querySelectorAll("rect").forEach((rect) => {
+        rect.setAttribute("rx", "0");
+        rect.setAttribute("ry", "0");
+      });
 
       const onColorChange = (color: { hexString: string }) => {
         if (suppressRef.current) return;
@@ -88,7 +94,6 @@ export default function ColorPicker({ value, onChange }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Sync wheel when value changes from any text input or slider.
   useEffect(() => {
     const picker = iroRef.current as { color: { hexString: string } } | null;
     if (!picker) return;
@@ -128,7 +133,6 @@ export default function ColorPicker({ value, onChange }: Props) {
     [rgbInput, onChange]
   );
 
-  // Swap only the L channel in HSL space; hue and saturation are preserved.
   const handleLightnessChange = useCallback(
     (pct: number) => {
       setLightness(pct);
@@ -146,8 +150,12 @@ export default function ColorPicker({ value, onChange }: Props) {
 
   return (
     <Wrapper>
-      <WheelContainer ref={wheelRef} />
-      <Preview style={{ background: value }} aria-label={`Current color: ${value}`} />
+      {/* WheelContainer + Preview pinned to PICKER_WIDTH so they stay flush */}
+      <PickerFrame>
+        <WheelContainer ref={wheelRef} />
+        <Preview style={{ background: value }} aria-label={`Current color: ${value}`} />
+      </PickerFrame>
+
       <Fields>
         <FieldGroup>
           <Label $error={hexError}>HEX</Label>
@@ -162,6 +170,7 @@ export default function ColorPicker({ value, onChange }: Props) {
           />
           {hexError && <ErrorHint>invalid hex</ErrorHint>}
         </FieldGroup>
+
         <RgbRow>
           {(["r", "g", "b"] as const).map((ch) => (
             <FieldGroup key={ch}>
@@ -214,22 +223,35 @@ export default function ColorPicker({ value, onChange }: Props) {
 const Wrapper = styled.div`
   display: flex;
   flex-direction: column;
-  align-items: center;
   gap: 16px;
+`;
+
+const PickerFrame = styled.div`
+  width: ${PICKER_WIDTH}px;
+  display: flex;
+  flex-direction: column;
+  /* No border-radius anywhere inside iro.js */
+  & * {
+    border-radius: 0 !important;
+  }
 `;
 
 const WheelContainer = styled.div`
   line-height: 0;
+  font-size: 0;
 `;
 
 const Preview = styled.div`
   width: 100%;
-  height: 32px;
+  height: 20px;
   border: 2px solid #333;
-  box-shadow:
-    -2px -2px 0 #111,
-    2px 2px 0 #555;
-  image-rendering: pixelated;
+  border-top: none;
+  /* iro.js bakes bottom padding into an inline height style so CSS overrides
+     won't shrink the container. Pull Preview up by the same amount (padding
+     option = 6px) so it sits flush against the last iro.js element. */
+  margin-top: -6px;
+  position: relative;
+  z-index: 1;
 `;
 
 const Fields = styled.div`
@@ -249,14 +271,15 @@ const FieldGroup = styled.div`
 const Label = styled.label<{ $error?: boolean }>`
   font-family: "Pixelify Sans", monospace;
   font-size: 12px;
-  color: ${(p) => (p.$error ? "#cc2222" : "#888")};
+  font-weight: 700;
+  color: ${(p) => (p.$error ? "#cc2222" : "#999")};
   letter-spacing: 1px;
 `;
 
 const baseInput = `
   background: #111;
-  border: 2px solid #333;
-  color: #f5f5f0;
+  border: 2px solid #3a3a3a;
+  color: #f0f0f0;
   font-family: "Courier New", monospace;
   font-size: 14px;
   padding: 6px 8px;
@@ -270,7 +293,7 @@ const baseInput = `
 
 const HexInput = styled.input<{ $error?: boolean }>`
   ${baseInput}
-  border-color: ${(p) => (p.$error ? "#cc2222" : "#333")};
+  border-color: ${(p) => (p.$error ? "#cc2222" : "#3a3a3a")};
   text-transform: uppercase;
 `;
 
@@ -298,8 +321,6 @@ const ErrorHint = styled.span`
   left: 0;
 `;
 
-// ─── Lightness slider ────────────────────────────────────────────────────────
-
 const LightnessGroup = styled.div`
   display: flex;
   flex-direction: column;
@@ -316,7 +337,7 @@ const LightnessHeader = styled.div`
 const LightnessPct = styled.span`
   font-family: "Courier New", monospace;
   font-size: 12px;
-  color: #666;
+  color: #aaa;
 `;
 
 const SliderTrackWrapper = styled.div`
@@ -331,7 +352,7 @@ const SliderTrack = styled.div`
   left: 0;
   right: 0;
   height: 8px;
-  border: 2px solid #333;
+  border: 2px solid #3a3a3a;
   pointer-events: none;
 `;
 
@@ -351,7 +372,7 @@ const LightnessSlider = styled.input`
     width: 12px;
     height: 16px;
     background: #cc2222;
-    border: 2px solid #f5f5f0;
+    border: 2px solid #f0f0f0;
     cursor: pointer;
     image-rendering: pixelated;
   }
@@ -359,7 +380,7 @@ const LightnessSlider = styled.input`
     width: 12px;
     height: 16px;
     background: #cc2222;
-    border: 2px solid #f5f5f0;
+    border: 2px solid #f0f0f0;
     cursor: pointer;
   }
 `;
@@ -369,10 +390,8 @@ const SliderEndLabels = styled.div`
   justify-content: space-between;
   font-family: "Pixelify Sans", monospace;
   font-size: 10px;
-  color: #444;
+  color: #666;
 `;
-
-// ─── Color info ──────────────────────────────────────────────────────────────
 
 const ColorInfo = styled.div`
   margin-top: 4px;
@@ -387,11 +406,12 @@ const InfoRow = styled.div`
 const InfoLabel = styled.span`
   font-family: "Pixelify Sans", monospace;
   font-size: 11px;
-  color: #555;
+  font-weight: 700;
+  color: #666;
 `;
 
 const InfoValue = styled.span`
   font-family: "Courier New", monospace;
   font-size: 12px;
-  color: #666;
+  color: #999;
 `;
