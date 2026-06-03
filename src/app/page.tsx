@@ -171,12 +171,28 @@ const Header = styled.header`
   justify-content: space-between;
   padding: 20px 32px;
   border-bottom: 2px solid #1a1a1a;
+
+  @media (max-width: 480px) {
+    padding: 16px;
+    /* Top-align so ABOUT sits level with the wordmark, not floating at the
+       vertical center of the taller brand block. */
+    align-items: flex-start;
+  }
 `;
 
 const Brand = styled.div`
   display: flex;
   align-items: center;
   gap: 16px;
+
+  @media (max-width: 480px) {
+    gap: 10px;
+    /* Scale the pixel panda down a touch so the brand fits with the link. */
+    & > svg {
+      width: 48px;
+      height: 60px;
+    }
+  }
 `;
 
 const BrandText = styled.div`
@@ -192,6 +208,11 @@ const WordMark = styled.span`
   color: #f5f5f0;
   letter-spacing: 3px;
   line-height: 1;
+
+  @media (max-width: 480px) {
+    font-size: 22px;
+    letter-spacing: 2px;
+  }
 `;
 
 const Tagline = styled.span`
@@ -200,6 +221,11 @@ const Tagline = styled.span`
   font-weight: 400;
   color: #cc2222;
   letter-spacing: 1px;
+
+  @media (max-width: 480px) {
+    font-size: 10px;
+    letter-spacing: 0.5px;
+  }
 `;
 
 const Nav = styled.nav`
