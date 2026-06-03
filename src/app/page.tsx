@@ -139,7 +139,7 @@ function AppContent() {
       <LoadingScreen hidden={loaded} />
       <Header>
         <Brand>
-          <PandaMascot />
+          <MascotFloat><PandaMascot /></MascotFloat>
           <BrandText>
             <WordMark>PANDAMIME</WordMark>
             <Tagline>find your closest Pantone® colors</Tagline>
@@ -242,14 +242,28 @@ const Page = styled.div`
 
 // Gentle entrance used to stagger the hero and results in on first paint.
 const fadeInUp = keyframes`
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0);   }
+`;
+
+const slideDown = keyframes`
+  from { opacity: 0; transform: translateY(-12px); }
+  to   { opacity: 1; transform: translateY(0);     }
+`;
+
+const float = keyframes`
+  0%, 100% { transform: translateY(0);   }
+  50%       { transform: translateY(-5px); }
+`;
+
+const scaleIn = keyframes`
+  from { opacity: 0; transform: scale(0.88); }
+  to   { opacity: 1; transform: scale(1);    }
+`;
+
+const pixelPulse = keyframes`
+  0%, 100% { box-shadow: none; }
+  50%       { box-shadow: 0 0 0 3px rgba(204,34,34,0.35), 0 0 0 6px rgba(204,34,34,0.12); }
 `;
 
 const Header = styled.header`
@@ -258,12 +272,17 @@ const Header = styled.header`
   justify-content: space-between;
   padding: 20px 32px;
   border-bottom: 2px solid #1a1a1a;
+  animation: ${slideDown} 0.35s ease both;
 
   @media (max-width: 480px) {
     padding: 16px;
     /* Top-align so ABOUT sits level with the wordmark, not floating at the
        vertical center of the taller brand block. */
     align-items: flex-start;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
   }
 `;
 
@@ -274,11 +293,22 @@ const Brand = styled.div`
 
   @media (max-width: 480px) {
     gap: 10px;
-    /* Scale the pixel panda down a touch so the brand fits with the link. */
-    & > svg {
+  }
+`;
+
+const MascotFloat = styled.div`
+  animation: ${float} 3s ease-in-out infinite;
+  line-height: 0;
+
+  @media (max-width: 480px) {
+    & img {
       width: 48px;
       height: 60px;
     }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
   }
 `;
 
@@ -326,8 +356,22 @@ const NavLink = styled.a`
   font-weight: 400;
   color: #888;
   text-decoration: none;
+  position: relative;
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: #cc2222;
+    transition: width 0.2s ease;
+  }
   &:hover {
     color: #cc2222;
+  }
+  &:hover::after {
+    width: 100%;
   }
 `;
 
@@ -478,6 +522,11 @@ const Footer = styled.footer`
   gap: 16px;
   align-items: center;
   text-align: center;
+  animation: ${fadeInUp} 0.4s ease 0.4s both;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
 `;
 
 const FooterLinks = styled.div`
@@ -519,8 +568,12 @@ const FindMatchesButton = styled.button`
     padding: 10px 24px;
     cursor: pointer;
     width: 100%;
+    animation: ${pixelPulse} 2s ease-in-out infinite;
     &:active {
       background: #aa1111;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      animation: none;
     }
   }
 `;
@@ -528,6 +581,11 @@ const FindMatchesButton = styled.button`
 const modalBlink = keyframes`
   0%, 100% { opacity: 1; }
   50% { opacity: 0.3; }
+`;
+
+const overlayFadeIn = keyframes`
+  from { opacity: 0; }
+  to   { opacity: 1; }
 `;
 
 const ModalOverlay = styled.div`
@@ -538,6 +596,7 @@ const ModalOverlay = styled.div`
   align-items: center;
   justify-content: center;
   z-index: 200;
+  animation: ${overlayFadeIn} 0.15s ease both;
 `;
 
 const ModalBox = styled.div`
@@ -549,5 +608,5 @@ const ModalBox = styled.div`
   font-weight: 700;
   letter-spacing: 2px;
   color: #cc2222;
-  animation: ${modalBlink} 0.8s ease infinite;
+  animation: ${scaleIn} 0.2s ease both, ${modalBlink} 0.8s ease 0.2s infinite;
 `;
