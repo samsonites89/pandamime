@@ -43,10 +43,13 @@ function AppContent() {
   const [isLoading, setIsLoading] = useState(false);
   // Tracks whether the user has triggered a match on mobile at least once.
   const [mobileReady, setMobileReady] = useState(false);
+  // Pulses the Find Matches button when the user changes color on mobile.
+  const [hinting, setHinting] = useState(false);
 
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const calcTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const loadTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mainRef = useRef<HTMLElement>(null);
 
   const runMatch = useCallback(
@@ -88,6 +91,14 @@ function AppContent() {
           setModalText("CALIBRATING…");
           runMatchWithDelay(hex, count);
         }, DESKTOP_MATCH_DEBOUNCE_MS);
+      } else {
+        // Nudge the Find Matches button so the user knows the color changed.
+        setHinting(false);
+        setTimeout(() => {
+          setHinting(true);
+          if (hintTimer.current) clearTimeout(hintTimer.current);
+          hintTimer.current = setTimeout(() => setHinting(false), 600);
+        }, 0);
       }
     },
     [count, router, runMatchWithDelay]
@@ -116,6 +127,7 @@ function AppContent() {
       if (debounceTimer.current) clearTimeout(debounceTimer.current);
       if (calcTimer.current) clearTimeout(calcTimer.current);
       if (loadTimer.current) clearTimeout(loadTimer.current);
+      if (hintTimer.current) clearTimeout(hintTimer.current);
     },
     []
   );
@@ -155,7 +167,7 @@ function AppContent() {
           <PickerPanel>
             <PanelLabel>PICK A COLOR</PanelLabel>
             <ColorPicker value={color} onChange={handleColorChange} />
-            <FindMatchesButton onClick={handleFindMatches}>
+            <FindMatchesButton onClick={handleFindMatches} $hinting={hinting}>
               FIND MATCHES →
             </FindMatchesButton>
           </PickerPanel>
@@ -264,6 +276,15 @@ const scaleIn = keyframes`
 const pixelPulse = keyframes`
   0%, 100% { box-shadow: none; }
   50%       { box-shadow: 0 0 0 3px rgba(204,34,34,0.35), 0 0 0 6px rgba(204,34,34,0.12); }
+`;
+
+const buttonNudge = keyframes`
+  0%   { transform: translateY(0);    }
+  20%  { transform: translateY(-6px); }
+  40%  { transform: translateY(-2px); }
+  60%  { transform: translateY(-5px); }
+  80%  { transform: translateY(-1px); }
+  100% { transform: translateY(0);    }
 `;
 
 const Header = styled.header`
@@ -554,7 +575,7 @@ const FooterCopy = styled.p`
   letter-spacing: 0.5px;
 `;
 
-const FindMatchesButton = styled.button`
+const FindMatchesButton = styled.button<{ $hinting?: boolean }>`
   display: none;
   @media (max-width: 700px) {
     display: block;
@@ -568,7 +589,10 @@ const FindMatchesButton = styled.button`
     padding: 10px 24px;
     cursor: pointer;
     width: 100%;
-    animation: ${pixelPulse} 2s ease-in-out infinite;
+    animation: ${(p) => p.$hinting
+      ? `${buttonNudge} 0.6s ease both`
+      : `${pixelPulse} 2s ease-in-out infinite`
+    };
     &:active {
       background: #aa1111;
     }
