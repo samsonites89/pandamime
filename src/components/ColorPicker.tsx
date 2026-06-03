@@ -41,6 +41,7 @@ export default function ColorPicker({ value, onChange }: Props) {
   const iroRef = useRef<unknown>(null);
   const suppressRef = useRef(false);
 
+  const [prevValue, setPrevValue] = useState(value);
   const [hexInput, setHexInput] = useState(value.slice(1).toUpperCase());
   const [rgbInput, setRgbInput] = useState(() => {
     const { r, g, b } = hexToRgb(value);
@@ -52,13 +53,14 @@ export default function ColorPicker({ value, onChange }: Props) {
   // paint. Until then, we show a sized skeleton so there's no blank hole / jump.
   const [ready, setReady] = useState(false);
 
-  useEffect(() => {
+  if (prevValue !== value) {
+    setPrevValue(value);
     setHexInput(value.slice(1).toUpperCase());
     const { r, g, b } = hexToRgb(value);
     setRgbInput({ r: String(r), g: String(g), b: String(b) });
     setHexError(false);
     setLightness(getLightness(value));
-  }, [value]);
+  }
 
   useEffect(() => {
     let picker: { color: { hexString: string }; on: (e: string, cb: (c: { hexString: string }) => void) => void; off: (e: string, cb: unknown) => void; destroy: () => void } | null = null;
