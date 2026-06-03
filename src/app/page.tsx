@@ -101,10 +101,12 @@ function AppContent() {
   const handleCountChange = useCallback(
     (n: number) => {
       setCount(n);
+      // On mobile, don't run a match until the user has clicked Find Matches at least once.
+      if (typeof window !== "undefined" && window.innerWidth <= 700 && !mobileReady) return;
       setModalText("CALIBRATING…");
       runMatchWithDelay(color, n);
     },
-    [color, runMatchWithDelay]
+    [color, mobileReady, runMatchWithDelay]
   );
 
   useEffect(
