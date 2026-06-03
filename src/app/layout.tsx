@@ -6,6 +6,7 @@ export const metadata: Metadata = {
   title: "Pandamime — Find Your Closest Pantone® Colors",
   description:
     "Pick any color and find the closest named Pantone® fashion colors by perceptual distance. Free, offline, approximate.",
+  icons: { icon: "/pandamime.png" },
 };
 
 export default function RootLayout({
