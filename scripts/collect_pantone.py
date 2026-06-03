@@ -53,10 +53,13 @@ TABLE_FILE = "named_table.json"   # phase 2 output / resume state
 # NOTE the inconsistent casing in their own API: cotton is "Fh", the other two are "Fhi".
 # Cotton (TCX) and paper (TPG) mostly mirror each other but each surfaces colors the
 # other's top-8 window misses, so both are kept; --collapse dedups true overlaps later.
+# Nylon Brights (TN) and Metallic Shimmers (TPM) are separate numbering systems.
 NAMED_BOOKS = {
-    "pantoneFhCottonTcx":     "cotton",
-    "pantoneFhiPaperTpg":     "paper",
-    "pantoneFhiPolyesterTsx": "polyester",
+    "pantoneFhCottonTcx":            "cotton",
+    "pantoneFhiPaperTpg":            "paper",
+    "pantoneFhiPolyesterTsx":        "polyester",
+    "pantoneFhNylonBrightsTn":       "nylon",
+    "pantoneFhiMetallicShimmersTpm": "metallic",
 }
 
 TIMEOUT = 30
@@ -244,12 +247,12 @@ def build_table(colors, workers):
 # --------------------------------------------------------------------------- #
 
 COLLAPSE_FILE = "named_table_collapsed.json"
-SUFFIX_PREF = {"cotton": 0, "paper": 1, "polyester": 2}   # prefer the recognizable TCX code
+SUFFIX_PREF = {"cotton": 0, "paper": 1, "polyester": 2, "nylon": 3, "metallic": 4}
 
 
 def base_identity(row):
     """Cotton & paper share one numbering system, so '14-0760 TCX' and '14-0760 TPG'
-    are the same color identity. Polyester (TSX) is its own system -> never merged."""
+    are the same color identity. All other books use their own systems -> never merged."""
     if row["material"] in ("cotton", "paper"):
         return "fashion:" + row["code"].rsplit(" ", 1)[0]    # drop TCX/TPG suffix
     return f'{row["material"]}:{row["code"]}'
