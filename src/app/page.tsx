@@ -301,6 +301,7 @@ const PickerPanel = styled.div`
   /* Single-column: center the label with the now-centered picker block. */
   @media (max-width: 700px) {
     align-items: center;
+    order: 2;
   }
 `;
 
@@ -317,6 +318,9 @@ const HeroBlurb = styled.div`
   flex-direction: column;
   gap: 20px;
   padding-top: 8px;
+  @media (max-width: 700px) {
+    order: 1;
+  }
 `;
 
 const BlurbTitle = styled.h2`
