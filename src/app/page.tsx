@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
-import styled, { keyframes } from "styled-components";
+import styled, { keyframes, css } from "styled-components";
 import ColorPicker from "@/components/ColorPicker";
 import ResultsGrid from "@/components/ResultsGrid";
 import Disclaimer from "@/components/Disclaimer";
@@ -589,10 +589,10 @@ const FindMatchesButton = styled.button<{ $hinting?: boolean }>`
     padding: 10px 24px;
     cursor: pointer;
     width: 100%;
-    animation: ${(p) => p.$hinting
-      ? `${buttonNudge} 0.6s ease both`
-      : `${pixelPulse} 2s ease-in-out infinite`
-    };
+    ${(p) => p.$hinting
+      ? css`animation: ${buttonNudge} 0.6s ease both;`
+      : css`animation: ${pixelPulse} 2s ease-in-out infinite;`
+    }
     &:active {
       background: #aa1111;
     }
