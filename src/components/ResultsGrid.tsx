@@ -1,6 +1,6 @@
 "use client";
 
-import styled from "styled-components";
+import styled, { keyframes } from "styled-components";
 import { type PantoneMatch } from "@/lib/matcher";
 import ResultCard from "./ResultCard";
 import MiniCard from "./MiniCard";
@@ -9,13 +9,15 @@ interface Props {
   matches: PantoneMatch[];
   count: number;
   onCountChange: (n: number) => void;
+  isLoading?: boolean;
+  mobileReady?: boolean;
 }
 
 // Below this viewport width the 3-column grid leaves each cell too tight for
 // the full card, so each slot swaps to the compact MiniCard via CSS.
 const COMPACT_BREAKPOINT = "640px";
 
-export default function ResultsGrid({ matches, count, onCountChange }: Props) {
+export default function ResultsGrid({ matches, count, onCountChange, isLoading, mobileReady }: Props) {
   return (
     <Section>
       <Header>
@@ -32,24 +34,39 @@ export default function ResultsGrid({ matches, count, onCountChange }: Props) {
           />
         </SliderGroup>
       </Header>
-      {matches.length === 0 ? (
-        <Empty>pick a color to find matches</Empty>
-      ) : (
-        <Grid>
-          {matches.map((m, i) => (
-            // Each grid slot holds both variants; CSS shows the one that fits.
-            // Only one is ever visible, so the doubled DOM is inert.
-            <Slot key={m.code}>
-              <FullVariant>
-                <ResultCard match={m} rank={i + 1} />
-              </FullVariant>
-              <CompactVariant>
-                <MiniCard match={m} rank={i + 1} />
-              </CompactVariant>
-            </Slot>
-          ))}
-        </Grid>
-      )}
+
+      {/* Mobile-only: shown until the user triggers a first match */}
+      <MobilePending $visible={!mobileReady}>
+        PICK A COLOR AND TAP FIND MATCHES ↑
+      </MobilePending>
+
+      {/* Results: hidden on mobile until first match triggered */}
+      <ResultsArea $mobileReady={!!mobileReady}>
+        {isLoading ? (
+          <Grid>
+            {Array.from({ length: count }).map((_, i) => (
+              <SkeletonSlot key={i} />
+            ))}
+          </Grid>
+        ) : matches.length === 0 ? (
+          <Empty>pick a color to find matches</Empty>
+        ) : (
+          <Grid>
+            {matches.map((m, i) => (
+              // Each grid slot holds both variants; CSS shows the one that fits.
+              // Only one is ever visible, so the doubled DOM is inert.
+              <Slot key={m.code}>
+                <FullVariant>
+                  <ResultCard match={m} rank={i + 1} />
+                </FullVariant>
+                <CompactVariant>
+                  <MiniCard match={m} rank={i + 1} />
+                </CompactVariant>
+              </Slot>
+            ))}
+          </Grid>
+        )}
+      </ResultsArea>
     </Section>
   );
 }
@@ -149,4 +166,39 @@ const Empty = styled.p`
   color: #444;
   text-align: center;
   padding: 48px 0;
+`;
+
+const MobilePending = styled.p<{ $visible: boolean }>`
+  display: none;
+  @media (max-width: 700px) {
+    display: ${(p) => (p.$visible ? "block" : "none")};
+    font-family: "Pixelify Sans", monospace;
+    font-size: 13px;
+    color: #444;
+    text-align: center;
+    padding: 48px 0;
+    letter-spacing: 1px;
+  }
+`;
+
+const ResultsArea = styled.div<{ $mobileReady: boolean }>`
+  @media (max-width: 700px) {
+    display: ${(p) => (p.$mobileReady ? "block" : "none")};
+  }
+`;
+
+const shimmer = keyframes`
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+`;
+
+const SkeletonSlot = styled.div`
+  height: 120px;
+  background: linear-gradient(90deg, #111 25%, #1e1e1e 50%, #111 75%);
+  background-size: 200% 100%;
+  animation: ${shimmer} 1.4s ease infinite;
+
+  @media (max-width: ${COMPACT_BREAKPOINT}) {
+    height: 72px;
+  }
 `;

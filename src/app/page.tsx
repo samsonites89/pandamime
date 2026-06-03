@@ -13,7 +13,7 @@ import { findClosest, type PantoneMatch } from "@/lib/matcher";
 import { normalizeHex, getContrastColor } from "@/lib/color";
 
 const DEFAULT_COLOR = "#cc2222";
-const DEFAULT_COUNT = 5;
+const DEFAULT_COUNT = 6;
 const DEBOUNCE_MS = 150;
 
 function AppContent() {
@@ -31,14 +31,21 @@ function AppContent() {
 
   const [color, setColor] = useState(initialColor);
   const [count, setCount] = useState(DEFAULT_COUNT);
-  const [matches, setMatches] = useState<PantoneMatch[]>(() =>
-    findClosest(initialColor, DEFAULT_COUNT)
-  );
+  // Start empty — desktop auto-fills on mount; mobile only fills on button click.
+  const [matches, setMatches] = useState<PantoneMatch[]>([]);
   // Starts false on both server and first client render (no hydration mismatch),
   // then flips after mount to fade out the splash.
   const [loaded, setLoaded] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [modalText, setModalText] = useState("CALIBRATING…");
+  const [isLoading, setIsLoading] = useState(false);
+  // Tracks whether the user has triggered a match on mobile at least once.
+  const [mobileReady, setMobileReady] = useState(false);
 
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const calcTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const loadTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mainRef = useRef<HTMLElement>(null);
 
   const runMatch = useCallback(
     (hex: string, n: number) => {
@@ -51,31 +58,71 @@ function AppContent() {
     []
   );
 
+  // Shared modal → match → skeleton sequence used by all trigger paths.
+  const runMatchWithDelay = useCallback(
+    (hex: string, n: number) => {
+      setShowModal(true);
+      if (calcTimer.current) clearTimeout(calcTimer.current);
+      calcTimer.current = setTimeout(() => {
+        runMatch(hex, n);
+        setShowModal(false);
+        setIsLoading(true);
+        if (loadTimer.current) clearTimeout(loadTimer.current);
+        loadTimer.current = setTimeout(() => setIsLoading(false), 500);
+      }, 800);
+    },
+    [runMatch]
+  );
+
   const handleColorChange = useCallback(
     (hex: string) => {
       setColor(hex);
       router.replace(`?c=${hex.slice(1)}`, { scroll: false });
-
-      if (debounceTimer.current) clearTimeout(debounceTimer.current);
-      debounceTimer.current = setTimeout(() => runMatch(hex, count), DEBOUNCE_MS);
+      // Desktop only: debounce then show calibrating modal.
+      // Mobile waits for the explicit "Find Matches" button press.
+      if (typeof window === "undefined" || window.innerWidth > 700) {
+        if (debounceTimer.current) clearTimeout(debounceTimer.current);
+        debounceTimer.current = setTimeout(() => {
+          setModalText("CALIBRATING…");
+          runMatchWithDelay(hex, count);
+        }, DEBOUNCE_MS);
+      }
     },
-    [count, router, runMatch]
+    [count, router, runMatchWithDelay]
   );
+
+  const handleFindMatches = useCallback(() => {
+    setMobileReady(true);
+    mainRef.current?.scrollIntoView({ behavior: "smooth" });
+    setModalText("MATCHING…");
+    runMatchWithDelay(color, count);
+  }, [color, count, runMatchWithDelay]);
 
   const handleCountChange = useCallback(
     (n: number) => {
       setCount(n);
-      runMatch(color, n);
+      setModalText("CALIBRATING…");
+      runMatchWithDelay(color, n);
     },
-    [color, runMatch]
+    [color, runMatchWithDelay]
   );
 
   useEffect(
     () => () => {
       if (debounceTimer.current) clearTimeout(debounceTimer.current);
+      if (calcTimer.current) clearTimeout(calcTimer.current);
+      if (loadTimer.current) clearTimeout(loadTimer.current);
     },
     []
   );
+
+  // Desktop: auto-run first match while the splash screen is still showing.
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.innerWidth > 700) {
+      runMatch(initialColor, DEFAULT_COUNT);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Hold the splash briefly so it reads as intentional, then fade it out.
   useEffect(() => {
@@ -104,6 +151,9 @@ function AppContent() {
           <PickerPanel>
             <PanelLabel>PICK A COLOR</PanelLabel>
             <ColorPicker value={color} onChange={handleColorChange} />
+            <FindMatchesButton onClick={handleFindMatches}>
+              FIND MATCHES →
+            </FindMatchesButton>
           </PickerPanel>
           <HeroBlurb>
             <BlurbTitle>WHAT IS THIS?</BlurbTitle>
@@ -136,7 +186,7 @@ function AppContent() {
         </HeroInner>
       </Hero>
 
-      <Main>
+      <Main ref={mainRef}>
         <MainInner>
           <ColorPreviewBar style={{ background: color }}>
             <PreviewLabel style={{ color: getContrastColor(color) }}>
@@ -147,9 +197,17 @@ function AppContent() {
             matches={matches}
             count={count}
             onCountChange={handleCountChange}
+            isLoading={isLoading}
+            mobileReady={mobileReady}
           />
         </MainInner>
       </Main>
+
+      {showModal && (
+        <ModalOverlay>
+          <ModalBox>{modalText}</ModalBox>
+        </ModalOverlay>
+      )}
 
       <Footer>
         <Disclaimer />
@@ -441,4 +499,51 @@ const FooterCopy = styled.p`
   font-weight: 400;
   color: #444;
   letter-spacing: 0.5px;
+`;
+
+const FindMatchesButton = styled.button`
+  display: none;
+  @media (max-width: 700px) {
+    display: block;
+    font-family: "Pixelify Sans", monospace;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: #f5f5f0;
+    background: #cc2222;
+    border: none;
+    padding: 10px 24px;
+    cursor: pointer;
+    width: 100%;
+    &:active {
+      background: #aa1111;
+    }
+  }
+`;
+
+const modalBlink = keyframes`
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+`;
+
+const ModalOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+`;
+
+const ModalBox = styled.div`
+  background: #0a0a0a;
+  border: 2px solid #cc2222;
+  padding: 24px 40px;
+  font-family: "Pixelify Sans", monospace;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #cc2222;
+  animation: ${modalBlink} 0.8s ease infinite;
 `;
