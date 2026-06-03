@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import styled from "styled-components";
+import styled, { keyframes, css } from "styled-components";
 import { converter, formatHex } from "culori";
 import { normalizeHex, hexToRgb, rgbToHex, clampChannel } from "@/lib/color";
 
@@ -48,6 +48,9 @@ export default function ColorPicker({ value, onChange }: Props) {
   });
   const [hexError, setHexError] = useState(false);
   const [lightness, setLightness] = useState(() => getLightness(value));
+  // iro loads via dynamic import, so the canvas appears a beat after first
+  // paint. Until then, we show a sized skeleton so there's no blank hole / jump.
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     setHexInput(value.slice(1).toUpperCase());
@@ -89,6 +92,9 @@ export default function ColorPicker({ value, onChange }: Props) {
         rect.setAttribute("rx", "0");
         rect.setAttribute("ry", "0");
       });
+
+      // Canvas is in the DOM now — drop the skeleton.
+      setReady(true);
 
       const onColorChange = (color: { hexString: string }) => {
         if (suppressRef.current) return;
@@ -177,8 +183,17 @@ export default function ColorPicker({ value, onChange }: Props) {
 
   return (
     <Wrapper>
-      {/* WheelContainer + Preview pinned to PICKER_WIDTH so they stay flush */}
       <PickerFrame>
+        {/* Skeleton reserves the picker's space until iro's async chunk loads,
+            so there's no blank hole or layout jump on refresh. It mirrors iro's
+            box + hue-slider layout for a seamless swap. wheelRef stays a
+            separate, React-empty node so iro can own its DOM unobstructed. */}
+        {!ready && (
+          <Skeleton aria-hidden="true">
+            <SkelBox />
+            <SkelSlider />
+          </Skeleton>
+        )}
         <WheelContainer ref={wheelRef} />
         <Preview style={{ background: value }} aria-label={`Current color: ${value}`} />
       </PickerFrame>
@@ -269,6 +284,45 @@ const PickerFrame = styled.div`
   & * {
     border-radius: 0 !important;
   }
+`;
+
+const pulse = keyframes`
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+`;
+
+const skelPiece = css`
+  background: #161616;
+  box-shadow:
+    -2px 0 0 #2a2a2a,
+    2px 0 0 #2a2a2a,
+    0 -2px 0 #2a2a2a,
+    0 2px 0 #2a2a2a;
+  animation: ${pulse} 1.2s ease-in-out infinite;
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+`;
+
+const Skeleton = styled.div`
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+`;
+
+const SkelBox = styled.div`
+  ${skelPiece}
+  width: 100%;
+  /* Matches iro's square SV box. */
+  aspect-ratio: 1 / 1;
+`;
+
+const SkelSlider = styled.div`
+  ${skelPiece}
+  width: 100%;
+  height: 14px;
+  /* Matches iro's sliderMargin (12px) + sliderSize (14px). */
+  margin-top: 12px;
 `;
 
 const WheelContainer = styled.div`
