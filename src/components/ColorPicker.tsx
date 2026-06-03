@@ -2,7 +2,23 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import styled from "styled-components";
+import { converter, formatHex } from "culori";
 import { normalizeHex, hexToRgb, rgbToHex, clampChannel } from "@/lib/color";
+
+// HSL converter — used only for the lightness slider; all external state stays as #rrggbb.
+const toHsl = converter("hsl");
+
+function getLightness(hex: string): number {
+  const hsl = toHsl(hex);
+  return Math.round((hsl?.l ?? 0.5) * 100);
+}
+
+// Returns the pure-hue midpoint color (#rrggbb at L=50%) for the gradient track.
+function getMidColor(hex: string): string {
+  const hsl = toHsl(hex);
+  if (!hsl) return "#888888";
+  return formatHex({ ...hsl, l: 0.5 }) ?? "#888888";
+}
 
 interface Props {
   value: string; // canonical #rrggbb
@@ -20,33 +36,37 @@ export default function ColorPicker({ value, onChange }: Props) {
     return { r: String(r), g: String(g), b: String(b) };
   });
   const [hexError, setHexError] = useState(false);
+  const [lightness, setLightness] = useState(() => getLightness(value));
 
-  // Keep text fields in sync when value changes from outside (URL load, etc.)
+  // Keep all text fields and lightness in sync when value changes from outside.
   useEffect(() => {
     setHexInput(value.slice(1).toUpperCase());
     const { r, g, b } = hexToRgb(value);
     setRgbInput({ r: String(r), g: String(g), b: String(b) });
     setHexError(false);
+    setLightness(getLightness(value));
   }, [value]);
 
-  // Initialize iro.js wheel after mount (it requires DOM + browser APIs)
+  // Initialize iro.js wheel after mount (requires DOM + browser APIs).
   useEffect(() => {
     let picker: { color: { hexString: string }; on: (e: string, cb: (c: { hexString: string }) => void) => void; off: (e: string, cb: unknown) => void; destroy: () => void } | null = null;
 
     import("@jaames/iro").then(({ default: iro }) => {
       if (!wheelRef.current) return;
 
+      const iroUi = (iro as unknown as { ui: { Box: unknown; Slider: unknown } }).ui;
       picker = new (iro as unknown as { ColorPicker: new (el: HTMLDivElement, opts: object) => typeof picker }
       ).ColorPicker(wheelRef.current, {
         width: 200,
         color: value,
-        layout: [{ component: (iro as unknown as { ui: { Wheel: unknown } }).ui.Wheel }],
+        layout: [
+          { component: iroUi.Box },
+          { component: iroUi.Slider, options: { sliderType: "hue" } },
+        ],
         borderWidth: 0,
         handleRadius: 7,
-        sliderSize: 12,
-        padding: 4,
-        wheelLightness: true,
-        wheelAngle: 0,
+        sliderSize: 14,
+        padding: 6,
       });
 
       iroRef.current = picker;
@@ -64,13 +84,11 @@ export default function ColorPicker({ value, onChange }: Props) {
       };
     });
 
-    return () => {
-      picker?.destroy();
-    };
+    return () => { picker?.destroy(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Sync wheel when value changes from text inputs
+  // Sync wheel when value changes from any text input or slider.
   useEffect(() => {
     const picker = iroRef.current as { color: { hexString: string } } | null;
     if (!picker) return;
@@ -110,7 +128,21 @@ export default function ColorPicker({ value, onChange }: Props) {
     [rgbInput, onChange]
   );
 
+  // Swap only the L channel in HSL space; hue and saturation are preserved.
+  const handleLightnessChange = useCallback(
+    (pct: number) => {
+      setLightness(pct);
+      const hsl = toHsl(value);
+      if (!hsl) return;
+      const newHex = formatHex({ ...hsl, l: pct / 100 });
+      if (newHex) onChange(newHex);
+    },
+    [value, onChange]
+  );
+
   const rgb = hexToRgb(value);
+  const midColor = getMidColor(value);
+  const trackGradient = `linear-gradient(to right, #000000, ${midColor}, #ffffff)`;
 
   return (
     <Wrapper>
@@ -145,6 +177,29 @@ export default function ColorPicker({ value, onChange }: Props) {
             </FieldGroup>
           ))}
         </RgbRow>
+
+        <LightnessGroup>
+          <LightnessHeader>
+            <Label as="span">LIGHTNESS</Label>
+            <LightnessPct>{lightness}%</LightnessPct>
+          </LightnessHeader>
+          <SliderTrackWrapper>
+            <SliderTrack style={{ background: trackGradient }} />
+            <LightnessSlider
+              type="range"
+              min={0}
+              max={100}
+              value={lightness}
+              onChange={(e) => handleLightnessChange(Number(e.target.value))}
+              aria-label="Lightness"
+            />
+          </SliderTrackWrapper>
+          <SliderEndLabels>
+            <span>dark</span>
+            <span>light</span>
+          </SliderEndLabels>
+        </LightnessGroup>
+
         <ColorInfo>
           <InfoRow>
             <InfoLabel>RGB</InfoLabel>
@@ -164,7 +219,6 @@ const Wrapper = styled.div`
 `;
 
 const WheelContainer = styled.div`
-  /* iro.js mounts into this div */
   line-height: 0;
 `;
 
@@ -243,6 +297,82 @@ const ErrorHint = styled.span`
   bottom: -16px;
   left: 0;
 `;
+
+// ─── Lightness slider ────────────────────────────────────────────────────────
+
+const LightnessGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 4px;
+`;
+
+const LightnessHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+`;
+
+const LightnessPct = styled.span`
+  font-family: "Courier New", monospace;
+  font-size: 12px;
+  color: #666;
+`;
+
+const SliderTrackWrapper = styled.div`
+  position: relative;
+  height: 16px;
+  display: flex;
+  align-items: center;
+`;
+
+const SliderTrack = styled.div`
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 8px;
+  border: 2px solid #333;
+  pointer-events: none;
+`;
+
+const LightnessSlider = styled.input`
+  position: relative;
+  width: 100%;
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  outline: none;
+  cursor: pointer;
+  margin: 0;
+
+  &::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 12px;
+    height: 16px;
+    background: #cc2222;
+    border: 2px solid #f5f5f0;
+    cursor: pointer;
+    image-rendering: pixelated;
+  }
+  &::-moz-range-thumb {
+    width: 12px;
+    height: 16px;
+    background: #cc2222;
+    border: 2px solid #f5f5f0;
+    cursor: pointer;
+  }
+`;
+
+const SliderEndLabels = styled.div`
+  display: flex;
+  justify-content: space-between;
+  font-family: "Pixelify Sans", monospace;
+  font-size: 10px;
+  color: #444;
+`;
+
+// ─── Color info ──────────────────────────────────────────────────────────────
 
 const ColorInfo = styled.div`
   margin-top: 4px;
