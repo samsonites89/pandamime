@@ -14,7 +14,9 @@ import { normalizeHex, getContrastColor } from "@/lib/color";
 
 const DEFAULT_COLOR = "#cc2222";
 const DEFAULT_COUNT = 6;
-const DEBOUNCE_MS = 150;
+// Each drag event resets this timer, so the calibrating modal only fires
+// after the user has been still for this long.
+const DESKTOP_MATCH_DEBOUNCE_MS = 600;
 
 function AppContent() {
   const router = useRouter();
@@ -85,7 +87,7 @@ function AppContent() {
         debounceTimer.current = setTimeout(() => {
           setModalText("CALIBRATING…");
           runMatchWithDelay(hex, count);
-        }, DEBOUNCE_MS);
+        }, DESKTOP_MATCH_DEBOUNCE_MS);
       }
     },
     [count, router, runMatchWithDelay]

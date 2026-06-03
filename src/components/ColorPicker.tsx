@@ -64,6 +64,7 @@ export default function ColorPicker({ value, onChange }: Props) {
 
   useEffect(() => {
     let picker: { color: { hexString: string }; on: (e: string, cb: (c: { hexString: string }) => void) => void; off: (e: string, cb: unknown) => void; destroy: () => void } | null = null;
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
     import("@jaames/iro").then(({ default: iro }) => {
       if (!wheelRef.current) return;
@@ -100,18 +101,26 @@ export default function ColorPicker({ value, onChange }: Props) {
 
       const onColorChange = (color: { hexString: string }) => {
         if (suppressRef.current) return;
-        onChange(color.hexString.toLowerCase());
+        // Debounce at 80ms so rapid drag events don't flood the parent with
+        // re-renders and URL updates while still feeling live.
+        const hex = color.hexString.toLowerCase();
+        if (debounceTimer) clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => onChange(hex), 200);
       };
 
       picker!.on("color:change", onColorChange);
 
       return () => {
+        if (debounceTimer) clearTimeout(debounceTimer);
         picker!.off("color:change", onColorChange);
         picker!.destroy();
       };
     });
 
-    return () => { picker?.destroy(); };
+    return () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      picker?.destroy();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
