@@ -7,8 +7,18 @@ import { normalizeHex, hexToRgb, rgbToHex, clampChannel } from "@/lib/color";
 
 const toHsl = converter("hsl");
 
-// Width shared between iro.js and the preview bar so they stay aligned.
-const PICKER_WIDTH = 260;
+// iro.js renders at a fixed pixel width, so it can't flex with CSS like the
+// inputs do. We measure the container and call iro's resize() to keep the
+// square box matching its column. On desktop the picker sits in a ~260px
+// column; when the layout collapses to a single column it may stretch up to
+// this cap so it uses the extra width without becoming unwieldy.
+const MAX_PICKER_WIDTH = 600;
+const FALLBACK_WIDTH = 260;
+
+function pickerWidthFrom(el: HTMLElement | null): number {
+  const w = el?.clientWidth || FALLBACK_WIDTH;
+  return Math.min(Math.round(w), MAX_PICKER_WIDTH);
+}
 
 function getLightness(hex: string): number {
   const hsl = toHsl(hex);
@@ -56,7 +66,10 @@ export default function ColorPicker({ value, onChange }: Props) {
       const iroUi = (iro as unknown as { ui: { Box: unknown; Slider: unknown } }).ui;
       picker = new (iro as unknown as { ColorPicker: new (el: HTMLDivElement, opts: object) => typeof picker }
       ).ColorPicker(wheelRef.current, {
-        width: PICKER_WIDTH,
+        // Start at the container's current width; the ResizeObserver below keeps
+        // it in sync as the layout reflows. (wheelRef is full-width until iro
+        // injects its own sized canvas, so this reads the available width.)
+        width: pickerWidthFrom(wheelRef.current),
         color: value,
         layout: [
           { component: iroUi.Box },
@@ -101,6 +114,20 @@ export default function ColorPicker({ value, onChange }: Props) {
     picker.color.hexString = value;
     suppressRef.current = false;
   }, [value]);
+
+  // Keep iro's width in sync with its container as the layout reflows. We watch
+  // wheelRef (full-width; unaffected by iro's own sized canvas inside it) so
+  // resizing iro never feeds back into the observed element.
+  useEffect(() => {
+    const el = wheelRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(() => {
+      const picker = iroRef.current as { resize?: (w: number) => void } | null;
+      picker?.resize?.(pickerWidthFrom(el));
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   const handleHexChange = useCallback(
     (raw: string) => {
@@ -224,12 +251,20 @@ const Wrapper = styled.div`
   display: flex;
   flex-direction: column;
   gap: 16px;
+  /* Fill the column up to a sensible cap, then center so the picker block stays
+     comfortable (and aligned with its inputs) when the layout is single-column. */
+  width: 100%;
+  max-width: ${MAX_PICKER_WIDTH}px;
+  margin: 0 auto;
+  /* Allow shrinking below the iro canvas's intrinsic width (see WheelContainer). */
+  min-width: 0;
 `;
 
 const PickerFrame = styled.div`
-  width: ${PICKER_WIDTH}px;
+  width: 100%;
   display: flex;
   flex-direction: column;
+  min-width: 0;
   /* No border-radius anywhere inside iro.js */
   & * {
     border-radius: 0 !important;
@@ -237,21 +272,34 @@ const PickerFrame = styled.div`
 `;
 
 const WheelContainer = styled.div`
+  width: 100%;
   line-height: 0;
   font-size: 0;
+  /* iro injects a fixed-width canvas. Without this, that canvas's intrinsic
+     width sets a min-content size that props the column open and prevents it
+     from shrinking back down on resize. Clipping resets the automatic minimum
+     to 0 so the container tracks available width and the ResizeObserver can
+     drive iro back down. (Handles stay within the canvas, so nothing visible
+     is clipped.) */
+  min-width: 0;
+  overflow: hidden;
+  /* iro.js renders each component's <svg> as display:inline by default, which
+     leaves baseline descender space below the last element (the hue slider) —
+     that's the gap. Forcing the svgs to block removes it so Preview sits flush. */
+  & svg {
+    display: block;
+  }
 `;
 
 const Preview = styled.div`
   width: 100%;
-  height: 20px;
-  border: 2px solid #333;
-  border-top: none;
-  /* iro.js bakes bottom padding into an inline height style so CSS overrides
-     won't shrink the container. Pull Preview up by the same amount (padding
-     option = 6px) so it sits flush against the last iro.js element. */
-  margin-top: -6px;
-  position: relative;
-  z-index: 1;
+  height: 24px;
+  /* Match the iro Box, which is full-bleed (borderWidth: 0). A border here
+     would eat 2px each side under the global box-sizing:border-box, making the
+     swatch visibly narrower than the picker above it — so go borderless too. */
+  /* iro's own inter-element spacing is sliderMargin (12px); reuse it so the
+     swatch sits in the same vertical rhythm as the Box→Slider gap. */
+  margin-top: 12px;
 `;
 
 const Fields = styled.div`

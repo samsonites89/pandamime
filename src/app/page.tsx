@@ -240,6 +240,13 @@ const PickerPanel = styled.div`
   display: flex;
   flex-direction: column;
   gap: 12px;
+  /* Grid item must be allowed to shrink below the iro canvas's intrinsic width,
+     otherwise the column stays propped open and the picker can't shrink back. */
+  min-width: 0;
+  /* Single-column: center the label with the now-centered picker block. */
+  @media (max-width: 700px) {
+    align-items: center;
+  }
 `;
 
 const PanelLabel = styled.p`
