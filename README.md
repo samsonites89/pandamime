@@ -1,16 +1,43 @@
-# Pandamime
+<p align="center">
+  <img src="public/pandamime.png" alt="Pandamime mascot" width="80" />
+</p>
 
-Pick any color — get the closest named Pantone® fashion colors by perceptual distance.
+<h1 align="center">PANDAMIME</h1>
+<p align="center"><em>find your closest Pantone® colors</em></p>
+
+---
+
+You've got a hex code. You need a Pantone name. You open Pantone's website, hit a paywall, and close the tab. Sound familiar?
+
+**Pandamime** is the free, offline alternative. Drop any color — hex, RGB, or color wheel — and get up to 10 perceptually closest named Pantone® fashion colors, ranked by actual human eye distance (CIEDE2000), not by which RGB number is nearest.
+
+No account. No paywall. No backend. Everything runs in your browser.
 
 > **Not affiliated with or endorsed by Pantone LLC. PANTONE® is a registered trademark of Pantone LLC. Color matches are approximate and for reference only — verify against an official Pantone guide before production use.**
 
 ---
 
+## Why this exists
+
+**Pantone** is the global standard for color communication. If you've ever worked on print, fashion, product design, or brand identity, you've encountered it: a system of 1,900+ named, numbered colors — things like *Cyber Yellow 14-0760 TCX* or *Classic Blue 19-4052 TCX* — each with a precisely defined ink formula that prints the same on a swatch in Tokyo as it does in Toronto.
+
+Pantone colors are everywhere. Brand guidelines specify them. Fabric suppliers quote them. Printer proofs use them. When a designer says "use Pantone 485," everyone in the supply chain knows exactly what red that means.
+
+The problem: looking up which Pantone code is closest to a given screen color requires either an expensive physical fan deck or a subscription to Pantone's digital tools. That's a steep tax for a single "what's the Pantone name for this?" lookup.
+
+Pandamime was built to close that gap — a fast, free, perceptually accurate reference tool for the moments when you just need a name to put in a brief, a spec, or a conversation.
+
+---
+
 ## What it does
 
-Pandamime is a free, client-side tool for developers and designers. Drop a color (color wheel, hex, or RGB) and get up to 10 perceptually closest named Pantone® fashion colors ranked by ΔE (CIEDE2000). Results include the color name, code, hex value, and a plain-words closeness cue.
+Drop a color (color wheel, hex, or RGB) and get up to 10 perceptually closest named Pantone® fashion colors ranked by **ΔE (CIEDE2000)** — the industry-standard metric for how different two colors look to the human eye. Results include the color name, code, hex value, and a plain-words closeness cue.
+
+Covers **1,900+ colors** across three Pantone fashion books: cotton (TCX), paper (TPG), and polyester (TSX).
 
 All matching runs in the browser — no backend, no API calls, no rate limits.
+
+---
 
 ## Tech stack
 
