@@ -56,8 +56,8 @@ const Header = styled.div`
 `;
 
 const SectionTitle = styled.h2`
-  font-family: "Press Start 2P", monospace;
-  font-size: 9px;
+  font-family: "Pixelify Sans", monospace;
+  font-size: 13px;
   color: #555;
   letter-spacing: 1px;
   margin: 0;
@@ -70,10 +70,10 @@ const SliderGroup = styled.div`
 `;
 
 const SliderLabel = styled.span`
-  font-family: "Press Start 2P", monospace;
-  font-size: 8px;
+  font-family: "Pixelify Sans", monospace;
+  font-size: 12px;
   color: #888;
-  min-width: 80px;
+  min-width: 90px;
 `;
 
 const Slider = styled.input`
@@ -114,8 +114,8 @@ const Grid = styled.div`
 `;
 
 const Empty = styled.p`
-  font-family: "Press Start 2P", monospace;
-  font-size: 10px;
+  font-family: "Pixelify Sans", monospace;
+  font-size: 14px;
   color: #444;
   text-align: center;
   padding: 48px 0;

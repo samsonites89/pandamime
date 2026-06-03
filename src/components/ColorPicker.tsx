@@ -193,8 +193,8 @@ const FieldGroup = styled.div`
 `;
 
 const Label = styled.label<{ $error?: boolean }>`
-  font-family: "Press Start 2P", monospace;
-  font-size: 8px;
+  font-family: "Pixelify Sans", monospace;
+  font-size: 12px;
   color: ${(p) => (p.$error ? "#cc2222" : "#888")};
   letter-spacing: 1px;
 `;
@@ -236,11 +236,11 @@ const RgbInput = styled.input`
 `;
 
 const ErrorHint = styled.span`
-  font-family: "Press Start 2P", monospace;
-  font-size: 7px;
+  font-family: "Pixelify Sans", monospace;
+  font-size: 11px;
   color: #cc2222;
   position: absolute;
-  bottom: -14px;
+  bottom: -16px;
   left: 0;
 `;
 
@@ -255,8 +255,8 @@ const InfoRow = styled.div`
 `;
 
 const InfoLabel = styled.span`
-  font-family: "Press Start 2P", monospace;
-  font-size: 7px;
+  font-family: "Pixelify Sans", monospace;
+  font-size: 11px;
   color: #555;
 `;
 

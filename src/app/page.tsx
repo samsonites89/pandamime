@@ -183,16 +183,16 @@ const BrandText = styled.div`
 `;
 
 const WordMark = styled.span`
-  font-family: "Press Start 2P", monospace;
-  font-size: 16px;
+  font-family: "Pixelify Sans", monospace;
+  font-size: 24px;
   color: #f5f5f0;
   letter-spacing: 2px;
   line-height: 1;
 `;
 
 const Tagline = styled.span`
-  font-family: "Press Start 2P", monospace;
-  font-size: 7px;
+  font-family: "Pixelify Sans", monospace;
+  font-size: 12px;
   color: #cc2222;
   letter-spacing: 1px;
 `;
@@ -203,8 +203,8 @@ const Nav = styled.nav`
 `;
 
 const NavLink = styled.a`
-  font-family: "Press Start 2P", monospace;
-  font-size: 8px;
+  font-family: "Pixelify Sans", monospace;
+  font-size: 13px;
   color: #555;
   text-decoration: none;
   &:hover {
@@ -237,8 +237,8 @@ const PickerPanel = styled.div`
 `;
 
 const PanelLabel = styled.p`
-  font-family: "Press Start 2P", monospace;
-  font-size: 8px;
+  font-family: "Pixelify Sans", monospace;
+  font-size: 12px;
   color: #555;
   letter-spacing: 1px;
 `;
@@ -251,8 +251,8 @@ const HeroBlurb = styled.div`
 `;
 
 const BlurbTitle = styled.h2`
-  font-family: "Press Start 2P", monospace;
-  font-size: 10px;
+  font-family: "Pixelify Sans", monospace;
+  font-size: 16px;
   color: #f5f5f0;
   letter-spacing: 1px;
 `;
@@ -281,14 +281,14 @@ const Stat = styled.div`
 `;
 
 const StatNum = styled.span`
-  font-family: "Press Start 2P", monospace;
-  font-size: 14px;
+  font-family: "Pixelify Sans", monospace;
+  font-size: 20px;
   color: #f5f5f0;
 `;
 
 const StatLabel = styled.span`
-  font-family: "Press Start 2P", monospace;
-  font-size: 6px;
+  font-family: "Pixelify Sans", monospace;
+  font-size: 11px;
   color: #444;
   letter-spacing: 1px;
 `;
@@ -315,8 +315,8 @@ const ColorPreviewBar = styled.div`
 `;
 
 const PreviewLabel = styled.span`
-  font-family: "Press Start 2P", monospace;
-  font-size: 7px;
+  font-family: "Pixelify Sans", monospace;
+  font-size: 11px;
   color: rgba(255, 255, 255, 0.5);
   mix-blend-mode: difference;
 `;

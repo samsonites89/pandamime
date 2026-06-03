@@ -106,8 +106,8 @@ const TopRow = styled.div`
 `;
 
 const Rank = styled.span`
-  font-family: "Press Start 2P", monospace;
-  font-size: 8px;
+  font-family: "Pixelify Sans", monospace;
+  font-size: 12px;
   color: #444;
 `;
 
@@ -129,15 +129,15 @@ const ratingColor: Record<string, string> = {
 };
 
 const DeltaLabel = styled.div<{ $rating: string }>`
-  font-family: "Press Start 2P", monospace;
-  font-size: 6px;
+  font-family: "Pixelify Sans", monospace;
+  font-size: 10px;
   color: ${(p) => ratingColor[p.$rating] ?? "#888"};
   margin-top: 2px;
 `;
 
 const ColorName = styled.h3`
-  font-family: "Press Start 2P", monospace;
-  font-size: 9px;
+  font-family: "Pixelify Sans", monospace;
+  font-size: 13px;
   color: #f5f5f0;
   line-height: 1.6;
   margin: 0;
@@ -180,9 +180,9 @@ const Materials = styled.div`
 `;
 
 const MaterialTag = styled.span`
-  font-family: "Press Start 2P", monospace;
-  font-size: 6px;
+  font-family: "Pixelify Sans", monospace;
+  font-size: 10px;
   color: #555;
-  padding: 2px 4px;
+  padding: 2px 5px;
   border: 1px solid #333;
 `;

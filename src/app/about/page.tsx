@@ -117,8 +117,8 @@ const Brand = styled.a`
 `;
 
 const WordMark = styled.span`
-  font-family: "Press Start 2P", monospace;
-  font-size: 16px;
+  font-family: "Pixelify Sans", monospace;
+  font-size: 24px;
   color: #f5f5f0;
   letter-spacing: 2px;
 `;
@@ -133,8 +133,8 @@ const Content = styled.main`
 `;
 
 const Title = styled.h1`
-  font-family: "Press Start 2P", monospace;
-  font-size: 14px;
+  font-family: "Pixelify Sans", monospace;
+  font-size: 22px;
   color: #f5f5f0;
   letter-spacing: 2px;
 `;
@@ -146,8 +146,8 @@ const Section = styled.section`
 `;
 
 const SectionTitle = styled.h2`
-  font-family: "Press Start 2P", monospace;
-  font-size: 9px;
+  font-family: "Pixelify Sans", monospace;
+  font-size: 14px;
   color: #cc2222;
   letter-spacing: 1px;
 `;
@@ -208,15 +208,15 @@ const DisclaimerBox = styled.div`
 `;
 
 const DisclaimerTitle = styled.h3`
-  font-family: "Press Start 2P", monospace;
-  font-size: 8px;
+  font-family: "Pixelify Sans", monospace;
+  font-size: 12px;
   color: #444;
   letter-spacing: 1px;
 `;
 
 const BackLink = styled.a`
-  font-family: "Press Start 2P", monospace;
-  font-size: 8px;
+  font-family: "Pixelify Sans", monospace;
+  font-size: 13px;
   color: #555;
   text-decoration: none;
   &:hover {
