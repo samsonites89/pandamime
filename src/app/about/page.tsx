@@ -32,7 +32,16 @@ export default function About() {
           <Body>
             The dataset covers 1,900+ named fashion colors across three books.
             It can be regenerated at any time by running{" "}
-            <Code>collect_pantone.py</Code> (included in the repository).
+            <Code>
+              <a
+                href="https://github.com/samsonites89/pandamime/blob/main/scripts/collect_pantone.py"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                collect_pantone.py
+              </a>
+            </Code>{" "}
+            (included in the repository).
           </Body>
         </Section>
 
@@ -169,6 +178,15 @@ const Code = styled.code`
   color: #cc2222;
   background: #1a1a1a;
   padding: 1px 4px;
+
+  a {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    &:hover {
+      color: #ff4444;
+    }
+  }
 `;
 
 const DeltaTable = styled.div`
